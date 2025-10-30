@@ -3,19 +3,26 @@ package com.example.level_upmovil.ui.screens
 import com.example.level_upmovil.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,9 +40,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.level_upmovil.model.Producto
+import com.example.level_upmovil.model.listaProductos
 import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
@@ -49,6 +60,16 @@ fun CatalogoScreen(
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    val productos = listaProductos
+    val onReviewAction: (Producto) -> Unit = { producto ->
+        println("Abriendo reseña para: ${producto.nombre}")
+        // Aquí puedes usar navController.navigate(...)
+    }
+    val onAddAction: (Producto) -> Unit = { producto ->
+        println("Agregando al carrito: ${producto.nombre}")
+        // Aquí iría la lógica del ViewModel
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -100,103 +121,107 @@ fun CatalogoScreen(
             Column(
                 modifier = Modifier
                     .padding(innerPadding)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
 
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .background(Color.DarkGray,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .width(180.dp),
-                        contentAlignment = Alignment.Center
+                    ProductoCard(
+                        producto = productos[0],
+                        onReviewClick = onReviewAction,
+                        onAddToCartClick = onAddAction,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                        ){
-                        Column (
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ){
-                            Image(
-                                painter = painterResource(id = R.drawable.play5),
-                                contentDescription = "Play Station 5",
-                                modifier = Modifier
-                                    .width(150.dp)
-                                    .height(150.dp)
-                                    .padding(top = 15.dp)
-                            )
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                            Spacer(modifier = Modifier
-                                .height(6.dp))
-
-                            Text(text = "Play station 5")
-
-                            Spacer(modifier = Modifier
-                                .height(6.dp))
-
-                            Text(text = "$549.990")
-
-                            Spacer(modifier = Modifier
-                                .height(6.dp))
-
-                            Button(onClick = {}) {
-                                Text(text = "Agregar al carro")
-                            }
-                        }
-
-                    }
-
-                    Spacer(modifier = Modifier
-                        .width(30.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .background(Color.DarkGray,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .width(180.dp),
-                        contentAlignment = Alignment.Center
-
-                    ){
-                        Column (
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ){
-                            Image(
-                                painter = painterResource(id = R.drawable.play5),
-                                contentDescription = "Play Station 5",
-                                modifier = Modifier
-                                    .width(150.dp)
-                                    .height(150.dp)
-                                    .padding(top = 15.dp)
-                            )
-
-                            Spacer(modifier = Modifier
-                                .height(8.dp))
-
-                            Text(text = "Play station 5")
-
-                            Spacer(modifier = Modifier
-                                .height(8.dp))
-
-                            Text(text = "$549.990")
-
-                            Spacer(modifier = Modifier
-                                .height(6.dp))
-
-                            Button(onClick = {}) {
-                                Text(text = "Agregar al carro")
-                            }
-                        }
-                    }
+                    ProductoCard(
+                        producto = productos[0],
+                        onReviewClick = onReviewAction,
+                        onAddToCartClick = onAddAction,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    ProductoCard(
+                        producto = productos[0],
+                        onReviewClick = onReviewAction,
+                        onAddToCartClick = onAddAction,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    ProductoCard(
+                        producto = productos[0],
+                        onReviewClick = onReviewAction,
+                        onAddToCartClick = onAddAction,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ProductoCard(
+    producto: Producto,
+    onReviewClick: (Producto) -> Unit,
+    onAddToCartClick: (Producto) -> Unit,
+    modifier: Modifier = Modifier
+){
+    Card(
+        modifier = Modifier
+            .height(IntrinsicSize.Max)
+            .clickable{onReviewClick(producto)},
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(bottom = 15.dp)
+        ) {
+            Image(
+                painter = painterResource(id = producto.imageResId),
+                contentDescription = producto.nombre,
+                modifier = Modifier
+                    .width(150.dp)
+                    .height(150.dp)
+                    .padding(top = 15.dp)
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = producto.nombre,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = producto.precio,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+            Button(
+                onClick = {onAddToCartClick(producto)}
+            ) {
+                Text(text = "Agregar al carro")
             }
         }
     }
