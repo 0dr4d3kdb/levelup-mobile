@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -59,7 +60,7 @@ fun CatalogoScreen(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        viewModel.navigateTo(Screen.Catalogo)
+                        viewModel.navigateTo(Screen.Home)
                     }
                 )
 
@@ -69,6 +70,15 @@ fun CatalogoScreen(
                     onClick = {
                         scope.launch { drawerState.close() }
                         viewModel.navigateTo(Screen.Profile)
+                    }
+                )
+
+                NavigationDrawerItem(
+                    label = {Text("Catálogo")},
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        viewModel.navigateTo(Screen.Catalogo)
                     }
                 )
             }
@@ -124,14 +134,21 @@ fun CatalogoScreen(
                             )
 
                             Spacer(modifier = Modifier
-                                .height(8.dp))
+                                .height(6.dp))
 
                             Text(text = "Play station 5")
 
                             Spacer(modifier = Modifier
-                                .height(8.dp))
+                                .height(6.dp))
 
                             Text(text = "$549.990")
+
+                            Spacer(modifier = Modifier
+                                .height(6.dp))
+
+                            Button(onClick = {}) {
+                                Text(text = "Agregar al carro")
+                            }
                         }
 
                     }
@@ -170,17 +187,17 @@ fun CatalogoScreen(
                                 .height(8.dp))
 
                             Text(text = "$549.990")
-                        }
 
+                            Spacer(modifier = Modifier
+                                .height(6.dp))
+
+                            Button(onClick = {}) {
+                                Text(text = "Agregar al carro")
+                            }
+                        }
                     }
                 }
-                Text(text = "Catálogo")
-
-
-
             }
-
-
         }
     }
 }
