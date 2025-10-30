@@ -8,6 +8,8 @@ sealed class Screen(val route: String) {
 
     data object Settings : Screen("setting_page")
 
+    data object Catalogo : Screen("catalogo_page")
+
     data class Details(val itemId: String) : Screen("detail_page/{itemId}") {
 
         fun buildRoute(): String {

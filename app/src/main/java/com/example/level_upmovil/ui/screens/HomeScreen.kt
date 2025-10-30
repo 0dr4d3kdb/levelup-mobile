@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerState
@@ -29,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,11 +56,29 @@ fun HomeScreen(
             ModalDrawerSheet {
                 Text("Menú", modifier = Modifier.padding(16.dp))
                 NavigationDrawerItem(
-                    label = {Text("Ir a perfil")},
+                    label = {Text(text = "Inicio")},
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        viewModel.navigateTo(Screen.Home)
+                    }
+                )
+
+                NavigationDrawerItem(
+                    label = {Text("Perfil")},
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
                         viewModel.navigateTo(Screen.Profile)
+                    }
+                )
+
+                NavigationDrawerItem(
+                    label = {Text("Catálogo")},
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        viewModel.navigateTo(Screen.Catalogo)
                     }
                 )
             }
@@ -85,6 +105,14 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.level),
+                    contentDescription = "Logo Level Up",
+                    modifier = Modifier
+                        .height(150.dp)
+                        .width(150.dp),
+                    contentScale = ContentScale.Fit
+                )
                 Text("Bienvenido a la página de inicio!")
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = {viewModel.navigateTo(Screen.Settings)}) {

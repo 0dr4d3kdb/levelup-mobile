@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.level_upmovil.navigation.NavigationEvent
 import com.example.level_upmovil.navigation.Screen
+import com.example.level_upmovil.ui.screens.CatalogoScreen
 import com.example.level_upmovil.ui.screens.HomeScreen
 import com.example.level_upmovil.ui.screens.ProfileScreen
 import com.example.level_upmovil.ui.screens.SettingsScreen
@@ -36,7 +37,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         //enableEdgeToEdge()
         setContent {
-            LevelupMovilTheme {
+            LevelupMovilTheme(darkTheme = true, dynamicColor = false) {
+
 
                 val viewModel: MainViewModel = viewModel()
                 val navController = rememberNavController()
@@ -79,6 +81,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(route = Screen.Settings.route) {
                             SettingsScreen(navController = navController, viewModel = viewModel)
+                        }
+                        composable (route = Screen.Catalogo.route){
+                            CatalogoScreen(navController = navController, viewModel = viewModel)
                         }
                     }
                 }
