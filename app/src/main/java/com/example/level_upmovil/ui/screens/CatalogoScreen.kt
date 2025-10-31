@@ -1,5 +1,8 @@
 package com.example.level_upmovil.ui.screens
 
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import com.example.level_upmovil.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,7 +54,6 @@ import com.example.level_upmovil.model.listaProductos
 import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.JdkConstants
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,56 +125,30 @@ fun CatalogoScreen(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
-                    .verticalScroll(scrollState),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
-
             ) {
-                Row(
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(innerPadding)
+                        .fillMaxSize(),
+
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    ProductoCard(
-                        producto = productos[0],
-                        onReviewClick = onReviewAction,
-                        onAddToCartClick = onAddAction,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    ProductoCard(
-                        producto = productos[0],
-                        onReviewClick = onReviewAction,
-                        onAddToCartClick = onAddAction,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    ProductoCard(
-                        producto = productos[0],
-                        onReviewClick = onReviewAction,
-                        onAddToCartClick = onAddAction,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    ProductoCard(
-                        producto = productos[0],
-                        onReviewClick = onReviewAction,
-                        onAddToCartClick = onAddAction,
-                        modifier = Modifier.weight(1f)
-                    )
+                    items(productos){ producto ->
+                        ProductoCard(
+                            producto = producto,
+                            onReviewClick = onReviewAction,
+                            onAddToCartClick = onAddAction,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        )
+                    }
                 }
             }
+
         }
     }
 }
@@ -184,7 +161,7 @@ fun ProductoCard(
     modifier: Modifier = Modifier
 ){
     Card(
-        modifier = Modifier
+        modifier = modifier
             .height(IntrinsicSize.Max)
             .clickable{onReviewClick(producto)},
         shape = RoundedCornerShape(10.dp),
@@ -192,7 +169,9 @@ fun ProductoCard(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier
+                .fillMaxSize()
                 .padding(bottom = 15.dp)
         ) {
             Image(
