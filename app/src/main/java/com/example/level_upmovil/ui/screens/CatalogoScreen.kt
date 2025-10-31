@@ -1,5 +1,11 @@
 package com.example.level_upmovil.ui.screens
 
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -63,22 +69,41 @@ fun CatalogoScreen(
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
+    // val scrollState = rememberScrollState() // Innecesario con LazyVerticalGrid
     val productos = listaProductos
+
+    // 1. ESTADO DE BÚSQUEDA Y FILTRADO
+    var searchText by remember { mutableStateOf("") }
+    var filteredProductos by remember { mutableStateOf(productos) }
+
     val onReviewAction: (Producto) -> Unit = { producto ->
         println("Abriendo reseña para: ${producto.nombre}")
         // Aquí puedes usar navController.navigate(...)
     }
+
     val onAddAction: (Producto) -> Unit = { producto ->
         println("Agregando al carrito: ${producto.nombre}")
         // Aquí iría la lógica del ViewModel
     }
+
+    // 2. FUNCIÓN DE FILTRADO
+    val performSearch: () -> Unit = {
+        filteredProductos = if (searchText.isBlank()) {
+            productos
+        } else {
+            productos.filter {
+                it.nombre.contains(searchText, ignoreCase = true)
+            }
+        }
+    }
+
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
                 Text(text = "Menú", modifier = Modifier.padding(16.dp))
+                // ... (NavigationDrawerItems)
                 NavigationDrawerItem(
                     label = {Text(text = "Inicio")},
                     selected = false,
@@ -121,23 +146,58 @@ fun CatalogoScreen(
                 )
             }
         ) { innerPadding ->
+
+            // CONTENEDOR PRINCIPAL: COLUMN
             Column(
                 modifier = Modifier
-                    .padding(innerPadding)
+                    .padding(innerPadding) // Aplica el padding del TopBar
                     .fillMaxSize()
             ) {
+
+                // --- BARRA DE BÚSQUEDA (ROW) ---
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ){
+                    OutlinedTextField(
+                        value = searchText,
+                        // 3. ASIGNACIÓN CORREGIDA: searchText = it
+                        onValueChange = {
+                            searchText = it
+                            // Opcional: Filtrar automáticamente cuando el usuario borra todo
+                            if (it.isEmpty()) performSearch()
+                        },
+                        label = { Text("Buscar producto") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Button(
+                        onClick = performSearch, // Llama a la función de filtrado
+                    ) {
+                        Text(text = "Buscar")
+                    }
+                }
+
+                // --- GRILLA DE PRODUCTOS (LAZYVERTICALGRID) ---
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
 
                     modifier = Modifier
-                        .padding(innerPadding)
+                        // Ocupa el espacio restante de la Column. Quitamos el .padding(innerPadding) duplicado
                         .fillMaxSize(),
 
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                    // Reajustamos el padding para que no se duplique con el de la Column principal
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(productos){ producto ->
+                    // Usamos la lista filtrada
+                    items(filteredProductos){ producto ->
                         ProductoCard(
                             producto = producto,
                             onReviewClick = onReviewAction,
@@ -148,7 +208,6 @@ fun CatalogoScreen(
                     }
                 }
             }
-
         }
     }
 }
