@@ -5,6 +5,7 @@ import androidx.navigation.navArgument
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,7 +41,7 @@ import kotlinx.coroutines.flow.collectLatest
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //enableEdgeToEdge()
+        enableEdgeToEdge()
         setContent {
             LevelupMovilTheme(darkTheme = true, dynamicColor = false) {
 
@@ -69,14 +70,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Scaffold(
+                /*Scaffold(
                     modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
+                ) { innerPadding ->*/
 
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Home.route,
-                        modifier = Modifier.padding(innerPadding)
+                        //modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         composable(route = Screen.Home.route) {
                             HomeScreen(navController = navController, viewModel = viewModel)
@@ -115,7 +117,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
+
 }
 
 

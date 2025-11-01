@@ -103,7 +103,7 @@ fun CatalogoScreen(
 
             Column(
                 modifier = Modifier
-                    .padding(innerPadding) // Aplica el padding del TopBar
+                    .padding(innerPadding)
                     .fillMaxSize()
             ) {
 
