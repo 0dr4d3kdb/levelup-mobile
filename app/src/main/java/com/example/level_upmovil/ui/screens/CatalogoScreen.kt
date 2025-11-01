@@ -1,5 +1,6 @@
 package com.example.level_upmovil.ui.screens
 
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.getValue
@@ -69,21 +70,17 @@ fun CatalogoScreen(
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    // val scrollState = rememberScrollState() // Innecesario con LazyVerticalGrid
     val productos = listaProductos
 
-    // 1. ESTADO DE BÚSQUEDA Y FILTRADO
     var searchText by remember { mutableStateOf("") }
     var filteredProductos by remember { mutableStateOf(productos) }
 
     val onReviewAction: (Producto) -> Unit = { producto ->
-        println("Abriendo reseña para: ${producto.nombre}")
-        // Aquí puedes usar navController.navigate(...)
+        navController.navigate(Screen.DetalleProducto.createRoute(producto.id))
     }
 
     val onAddAction: (Producto) -> Unit = { producto ->
         println("Agregando al carrito: ${producto.nombre}")
-        // Aquí iría la lógica del ViewModel
     }
 
     // 2. FUNCIÓN DE FILTRADO
@@ -188,15 +185,11 @@ fun CatalogoScreen(
                     columns = GridCells.Fixed(2),
 
                     modifier = Modifier
-                        // Ocupa el espacio restante de la Column. Quitamos el .padding(innerPadding) duplicado
                         .fillMaxSize(),
-
-                    // Reajustamos el padding para que no se duplique con el de la Column principal
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Usamos la lista filtrada
                     items(filteredProductos){ producto ->
                         ProductoCard(
                             producto = producto,
@@ -221,7 +214,7 @@ fun ProductoCard(
 ){
     Card(
         modifier = modifier
-            .height(IntrinsicSize.Max)
+            .height(320.dp)
             .clickable{onReviewClick(producto)},
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
@@ -231,7 +224,7 @@ fun ProductoCard(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 15.dp)
+                .padding(vertical = 15.dp)
         ) {
             Image(
                 painter = painterResource(id = producto.imageResId),
@@ -246,13 +239,17 @@ fun ProductoCard(
             Text(
                 text = producto.nombre,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                maxLines = 2,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = producto.precio,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+
             )
 
             Spacer(modifier = Modifier.height(6.dp))

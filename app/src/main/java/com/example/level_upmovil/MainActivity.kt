@@ -1,5 +1,7 @@
 package com.example.level_upmovil
 
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,9 +23,12 @@ import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.level_upmovil.model.Producto
 import com.example.level_upmovil.navigation.NavigationEvent
 import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.ui.screens.CatalogoScreen
+import com.example.level_upmovil.ui.screens.DetalleProductoScreen
 import com.example.level_upmovil.ui.screens.HomeScreen
 import com.example.level_upmovil.ui.screens.ProfileScreen
 import com.example.level_upmovil.ui.screens.SettingsScreen
@@ -84,6 +89,27 @@ class MainActivity : ComponentActivity() {
                         }
                         composable (route = Screen.Catalogo.route){
                             CatalogoScreen(navController = navController, viewModel = viewModel)
+                        }
+                        composable (route = Screen.DetalleProducto.route,
+                            arguments = listOf(
+                                navArgument("productoId"){
+                                    type = NavType.IntType
+                                    defaultValue = -1
+                                }
+                            )
+                        ){backStackEntry ->
+                            val productoId = backStackEntry.arguments?.getInt("productoId") ?: -1
+
+                            val onAddAction: (Producto) -> Unit = {producto ->
+                                println("Acción de agregar al carro pendiente")
+                            }
+
+                            DetalleProductoScreen(
+                                productoId = productoId,
+                                navController = navController,
+                                viewModel = viewModel,
+                                onAddToCartClick =onAddAction
+                            )
                         }
                     }
                 }

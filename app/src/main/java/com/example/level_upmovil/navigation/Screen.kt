@@ -10,10 +10,9 @@ sealed class Screen(val route: String) {
 
     data object Catalogo : Screen("catalogo_page")
 
-    data class Details(val itemId: String) : Screen("detail_page/{itemId}") {
-
-        fun buildRoute(): String {
-            return route.replace("{itemId}", itemId)
+    data object DetalleProducto : Screen("detail_page/{productoId}"){
+        fun createRoute(productoId: Int): String{
+            return "detail_page/$productoId"
         }
     }
 }
