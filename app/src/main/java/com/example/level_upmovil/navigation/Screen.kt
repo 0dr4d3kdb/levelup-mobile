@@ -15,4 +15,6 @@ sealed class Screen(val route: String) {
             return "detail_page/$productoId"
         }
     }
+
+    data object Carrito : Screen("carrito_page")
 }

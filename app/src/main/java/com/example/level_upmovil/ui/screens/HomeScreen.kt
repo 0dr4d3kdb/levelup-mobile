@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.level_upmovil.navigation.Screen
+import com.example.level_upmovil.ui.components.AppScaffold
 import com.example.level_upmovil.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 
@@ -47,57 +48,13 @@ fun HomeScreen(
     navController: NavController,
     viewModel: MainViewModel = viewModel()
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Text("Menú", modifier = Modifier.padding(16.dp))
-                NavigationDrawerItem(
-                    label = {Text(text = "Inicio")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        viewModel.navigateTo(Screen.Home)
-                    }
-                )
 
-                NavigationDrawerItem(
-                    label = {Text("Perfil")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        viewModel.navigateTo(Screen.Profile)
-                    }
-                )
-
-                NavigationDrawerItem(
-                    label = {Text("Catálogo")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        viewModel.navigateTo(Screen.Catalogo)
-                    }
-                )
-            }
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {Text("Pantalla Home")},
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
-                        }
-                    }
-                )
-            }
-        ) { innerPadding ->
+    AppScaffold(
+        navController = navController,
+        viewModel = viewModel,
+        title = "Inicio"
+    ) { innerPadding ->
             Column(
                 modifier = Modifier
                     .padding(innerPadding)
@@ -120,8 +77,6 @@ fun HomeScreen(
                 }
             }
         }
-    }
-
 }
 
 /*@Preview(showBackground = true)

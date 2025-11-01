@@ -1,5 +1,6 @@
 package com.example.level_upmovil.ui.screens
 
+import com.example.level_upmovil.ui.components.AppScaffold
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.OutlinedTextField
@@ -68,8 +69,6 @@ fun CatalogoScreen(
     navController: NavController,
     viewModel: MainViewModel = viewModel()
 ){
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     val productos = listaProductos
 
     var searchText by remember { mutableStateOf("") }
@@ -95,63 +94,20 @@ fun CatalogoScreen(
     }
 
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Text(text = "Menú", modifier = Modifier.padding(16.dp))
-                // ... (NavigationDrawerItems)
-                NavigationDrawerItem(
-                    label = {Text(text = "Inicio")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        viewModel.navigateTo(Screen.Home)
-                    }
-                )
+    AppScaffold(
+        navController = navController,
+        viewModel = viewModel,
+        title = "Catálogo"
+    ) { innerPadding ->
 
-                NavigationDrawerItem(
-                    label = {Text("Perfil")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        viewModel.navigateTo(Screen.Profile)
-                    }
-                )
 
-                NavigationDrawerItem(
-                    label = {Text("Catálogo")},
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        viewModel.navigateTo(Screen.Catalogo)
-                    }
-                )
-            }
-        }
-
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {Text(text = "Catálogo")},
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) { Icon(Icons.Default.Menu, contentDescription = "Menú") }
-                    }
-                )
-            }
-        ) { innerPadding ->
-
-            // CONTENEDOR PRINCIPAL: COLUMN
             Column(
                 modifier = Modifier
                     .padding(innerPadding) // Aplica el padding del TopBar
                     .fillMaxSize()
             ) {
 
-                // --- BARRA DE BÚSQUEDA (ROW) ---
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -161,10 +117,10 @@ fun CatalogoScreen(
                 ){
                     OutlinedTextField(
                         value = searchText,
-                        // 3. ASIGNACIÓN CORREGIDA: searchText = it
+
                         onValueChange = {
                             searchText = it
-                            // Opcional: Filtrar automáticamente cuando el usuario borra todo
+
                             if (it.isEmpty()) performSearch()
                         },
                         label = { Text("Buscar producto") },
@@ -202,7 +158,6 @@ fun CatalogoScreen(
                 }
             }
         }
-    }
 }
 
 @Composable
