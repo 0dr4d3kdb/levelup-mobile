@@ -28,6 +28,7 @@ import androidx.navigation.navArgument
 import com.example.level_upmovil.model.Producto
 import com.example.level_upmovil.navigation.NavigationEvent
 import com.example.level_upmovil.navigation.Screen
+import com.example.level_upmovil.ui.screens.CarritoScreen
 import com.example.level_upmovil.ui.screens.CatalogoScreen
 import com.example.level_upmovil.ui.screens.DetalleProductoScreen
 import com.example.level_upmovil.ui.screens.HomeScreen
@@ -112,6 +113,10 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel,
                                 onAddToCartClick =onAddAction
                             )
+                        }
+
+                        composable(route = Screen.Carrito.route) {
+                            CarritoScreen(navController = navController, viewModel = viewModel)
                         }
                     }
                 }

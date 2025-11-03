@@ -77,7 +77,7 @@ fun AppScaffold(
                     },
                     actions = {
                         IconButton(onClick = {
-                            println("Navegando al carrito de compras")
+                            viewModel.navigateTo(Screen.Carrito)
                         }
                         ) {
                             Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito de compras" )

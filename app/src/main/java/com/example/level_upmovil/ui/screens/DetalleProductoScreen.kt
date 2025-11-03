@@ -46,7 +46,7 @@ fun DetalleProductoScreen(
     AppScaffold(
         navController = navController,
         viewModel = viewModel,
-        title = "Detalle del producto"
+        title = "Detalles del producto"
     ){ innerPadding ->
         Column (
             modifier = Modifier
