@@ -9,7 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.level_upmovil.R
 
-val Orbitron = FontFamily(
+val OrbitronFamily = FontFamily(
     Font(R.font.orbitron_regular)
 )
 val Roboto = FontFamily.Default
@@ -17,7 +17,7 @@ val Roboto = FontFamily.Default
 // Set of Material typography styles to start with
 val Typography = Typography(
     headlineLarge = TextStyle(
-        fontFamily = Orbitron,
+        fontFamily = OrbitronFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 30.sp,
         color = Color.White
