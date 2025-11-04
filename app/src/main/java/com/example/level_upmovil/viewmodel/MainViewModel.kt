@@ -2,6 +2,7 @@ package com.example.level_upmovil.viewmodel
 
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.level_upmovil.model.CartItem
 import com.example.level_upmovil.model.Producto
 import com.example.level_upmovil.navigation.NavigationEvent
@@ -22,6 +23,9 @@ class MainViewModel : ViewModel() {
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
 
     val navigationEvents: SharedFlow<NavigationEvent> = _navigationEvents.asSharedFlow()
+
+    private val _uiEvents = MutableSharedFlow<String>()
+    val uiEvents = _uiEvents.asSharedFlow()
 
     fun navigateTo(screen: Screen){
         CoroutineScope(Dispatchers.Main).launch {
@@ -60,6 +64,10 @@ class MainViewModel : ViewModel() {
                 currentItems + CartItem(producto = producto, cantidad = 1)
             }
         }
+
+        viewModelScope.launch {
+            _uiEvents.emit("✅ ${producto.nombre} agregado al carro.")
+        }
     }
 
     fun removerDelCarrito(producto: Producto){
@@ -82,11 +90,18 @@ class MainViewModel : ViewModel() {
                 currentItems
             }
         }
+
+        viewModelScope.launch {
+            _uiEvents.emit("✅ Se ha removido 1 ${producto.nombre} del carro.")
+        }
     }
 
     fun eliminarProductoDelCarrito(producto: Producto){
         _carrito.update { currentItems ->
             currentItems.filter { it.producto.id != producto.id }
+        }
+        viewModelScope.launch {
+            _uiEvents.emit("✅ Se ha eliminado ${producto.nombre} del carro.")
         }
     }
 }

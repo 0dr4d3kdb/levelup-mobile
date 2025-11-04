@@ -13,16 +13,22 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.viewmodel.MainViewModel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +41,16 @@ fun AppScaffold(
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect (key1 = Unit) {
+        viewModel.uiEvents.collectLatest { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short // Mostrarlo por un corto tiempo
+            )
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState =drawerState,
@@ -83,7 +99,12 @@ fun AppScaffold(
                             Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito de compras" )
                         }
                     }
+
                 )
+
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
             }
         ){ innerPadding ->
             content(innerPadding)
