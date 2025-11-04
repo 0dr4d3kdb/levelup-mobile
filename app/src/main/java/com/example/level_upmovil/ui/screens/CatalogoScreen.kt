@@ -33,6 +33,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
@@ -79,7 +80,7 @@ fun CatalogoScreen(
     }
 
     val onAddAction: (Producto) -> Unit = { producto ->
-        println("Agregando al carrito: ${producto.nombre}")
+        viewModel.agregarAlCarrito(producto)
     }
 
     // 2. FUNCIÓN DE FILTRADO
@@ -130,13 +131,13 @@ fun CatalogoScreen(
                     )
 
                     Button(
-                        onClick = performSearch, // Llama a la función de filtrado
+                        onClick = performSearch,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39FF14))
                     ) {
                         Text(text = "Buscar")
                     }
                 }
 
-                // --- GRILLA DE PRODUCTOS (LAZYVERTICALGRID) ---
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
 
@@ -209,7 +210,8 @@ fun ProductoCard(
 
             Spacer(modifier = Modifier.height(6.dp))
             Button(
-                onClick = {onAddToCartClick(producto)}
+                onClick = {onAddToCartClick(producto)},
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39FF14))
             ) {
                 Text(text = "Agregar al carro")
             }

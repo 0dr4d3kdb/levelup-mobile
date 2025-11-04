@@ -83,4 +83,10 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+    fun eliminarProductoDelCarrito(producto: Producto){
+        _carrito.update { currentItems ->
+            currentItems.filter { it.producto.id != producto.id }
+        }
+    }
 }

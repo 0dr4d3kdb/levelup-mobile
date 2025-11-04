@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,8 +30,7 @@ import com.example.level_upmovil.viewmodel.MainViewModel
 fun DetalleProductoScreen(
     productoId: Int,
     navController: NavController,
-    viewModel: MainViewModel,
-    onAddToCartClick: (Producto) -> Unit
+    viewModel: MainViewModel
 ){
 
     val producto = listaProductos.find { it.id == productoId }
@@ -41,6 +42,10 @@ fun DetalleProductoScreen(
             modifier = Modifier.padding(16.dp)
         )
         return
+    }
+
+    val onAddToCartClick: (Producto) -> Unit = {producto ->
+        viewModel.agregarAlCarrito(producto)
     }
 
     AppScaffold(
@@ -76,7 +81,8 @@ fun DetalleProductoScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = {onAddToCartClick(producto)}
+                onClick = {onAddToCartClick(producto)},
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39FF14))
             ) {
                 Text(text = "Agregar al carro")
             }

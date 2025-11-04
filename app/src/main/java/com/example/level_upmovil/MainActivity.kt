@@ -110,8 +110,8 @@ class MainActivity : ComponentActivity() {
                             DetalleProductoScreen(
                                 productoId = productoId,
                                 navController = navController,
-                                viewModel = viewModel,
-                                onAddToCartClick =onAddAction
+                                viewModel = viewModel
+                                //onAddToCartClick =onAddAction
                             )
                         }
 

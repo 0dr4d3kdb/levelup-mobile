@@ -17,9 +17,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.runtime.getValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -28,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -80,7 +88,8 @@ fun CarritoScreen(
                 items(itemsCarrito) {cartItem ->
                     CarritoItems(
                         cartItem = cartItem,
-                        onItemClick = onProductoClick
+                        onItemClick = onProductoClick,
+                        viewModel = viewModel
                     )
                 }
             }
@@ -92,8 +101,10 @@ fun CarritoScreen(
 fun CarritoItems(
     cartItem: CartItem,
     onItemClick: (productoId: Int) -> Unit,
+    viewModel: MainViewModel,
     modifier: Modifier = Modifier
 ){
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -108,7 +119,7 @@ fun CarritoItems(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .clickable{ onItemClick(cartItem.producto.id)}
+                    .clickable { onItemClick(cartItem.producto.id) }
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -116,10 +127,12 @@ fun CarritoItems(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = cartItem.producto.nombre,
-                    modifier = Modifier
-                        .clickable { onItemClick(cartItem.producto.id)}
-                    )
+                Text(
+                    text = "Producto: ",
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = cartItem.producto.nombre)
+
 
                 Text(
                     text = "Precio: ${cartItem.producto.precio}"
@@ -132,6 +145,50 @@ fun CarritoItems(
                 Text(
                     text = "${cartItem.cantidad}"
                 )
+            }
+
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(0.5f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row (
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    IconButton(
+                        onClick = { viewModel.removerDelCarrito(cartItem.producto) },
+                        modifier = Modifier
+                            .size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Remove, contentDescription = "Restar cantidad")
+                    }
+
+                    IconButton(
+                        onClick = {viewModel.agregarAlCarrito(cartItem.producto) },
+                        modifier = Modifier
+                            .size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Aumentar cantidad")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row (
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    IconButton(
+                        onClick = {viewModel.eliminarProductoDelCarrito(cartItem.producto) },
+                        modifier = Modifier
+                            .size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar del carro")
+                    }
+                }
             }
         }
     }
