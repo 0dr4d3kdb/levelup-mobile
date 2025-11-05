@@ -18,8 +18,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel // Importación necesaria
+import androidx.navigation.NavController // Importación necesaria
 import coil.compose.AsyncImage
+import com.example.level_upmovil.navigation.Screen // Importación necesaria
+import com.example.level_upmovil.ui.components.AppScaffold // Importación del Scaffold
 import com.example.level_upmovil.ui.theme.OrbitronFamily
+import com.example.level_upmovil.viewmodel.MainViewModel // Importación necesaria
 
 
 @Composable
@@ -73,9 +78,12 @@ fun ProfilePicture(
     }
 }
 
-
+// 1. Firma actualizada para aceptar NavController y MainViewModel
 @Composable
-fun ProfileScreen(onNavigateToHome: ()-> Unit) {
+fun ProfileScreen(
+    navController: NavController,
+    viewModel: MainViewModel = viewModel()
+) {
     var profileImageUri by remember { mutableStateOf<Uri?>(null) }
 
 
@@ -86,11 +94,18 @@ fun ProfileScreen(onNavigateToHome: ()-> Unit) {
         }
     )
 
-    Surface (color = MaterialTheme.colorScheme.background) {
+    // 2. Envolvemos la pantalla en el AppScaffold
+    AppScaffold(
+        navController = navController,
+        viewModel = viewModel,
+        title = "Perfil" // Título para la TopAppBar
+    ) { innerPadding -> // 3. Aplicamos el innerPadding
+
         Column (
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(innerPadding) // Aplicar padding aquí
+                .padding(24.dp), // Padding original de la pantalla
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -107,7 +122,8 @@ fun ProfileScreen(onNavigateToHome: ()-> Unit) {
                 }
             )
             Button(
-                onClick = onNavigateToHome,
+                // 4. Conectamos la navegación al ViewModel
+                onClick = { viewModel.navigateTo(Screen.Home) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)

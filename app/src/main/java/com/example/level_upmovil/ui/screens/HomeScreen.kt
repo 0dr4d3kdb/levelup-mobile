@@ -10,10 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel // Importación necesaria
+import androidx.navigation.NavController // Importación necesaria
 import coil.compose.AsyncImage
-import com.example.level_upmovil.ui.model.Producto
-import com.example.level_upmovil.ui.model.productos
+import com.example.level_upmovil.model.ProductoHome
+import com.example.level_upmovil.model.productos
+import com.example.level_upmovil.navigation.Screen // Importación necesaria
+import com.example.level_upmovil.ui.components.AppScaffold // Importación del Scaffold
 import com.example.level_upmovil.ui.theme.OrbitronFamily
+import com.example.level_upmovil.viewmodel.MainViewModel // Importación necesaria
 
 
 @Composable
@@ -36,18 +41,32 @@ fun PromotionalBanner() {
         )
     }
 }
-@Composable
-fun HomeScreen(onNavigateToProfile: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.background) {
 
+// 1. Firma actualizada para aceptar NavController y MainViewModel
+@Composable
+fun HomeScreen(
+    navController: NavController,
+    viewModel: MainViewModel = viewModel()
+) {
+    // 2. Envolvemos la pantalla en el AppScaffold
+    AppScaffold(
+        navController = navController,
+        viewModel = viewModel,
+        title = "Inicio" // Título para la TopAppBar
+    ) { innerPadding -> // 3. Aplicamos el innerPadding al contenedor principal
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), // Aplicar padding aquí
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
 
             item {
-                WelcomeBanner(onNavigateToProfile)
+                // 4. Conectamos la navegación al ViewModel
+                WelcomeBanner(onNavigateToProfile = {
+                    viewModel.navigateTo(Screen.Profile)
+                })
             }
             item {
                 PromotionalBanner()
@@ -98,7 +117,7 @@ fun WelcomeBanner(onNavigateToProfile: () -> Unit) {
 
 
 @Composable
-fun ProductListRow(products: List<Producto>) {
+fun ProductListRow(products: List<ProductoHome>) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -111,7 +130,7 @@ fun ProductListRow(products: List<Producto>) {
 
 
 @Composable
-fun ProductCard(producto: Producto) {
+fun ProductCard(producto: ProductoHome) {
     Card(
         modifier = Modifier
             .width(180.dp)

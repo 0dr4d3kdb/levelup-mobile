@@ -1,76 +1,140 @@
 package com.example.level_upmovil
 
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.level_upmovil.model.Producto
+import com.example.level_upmovil.navigation.NavigationEvent
+import com.example.level_upmovil.navigation.Screen
+import com.example.level_upmovil.ui.screens.CarritoScreen
+import com.example.level_upmovil.ui.screens.CatalogoScreen
+import com.example.level_upmovil.ui.screens.DetalleProductoScreen
 import com.example.level_upmovil.ui.screens.HomeScreen
-import com.example.level_upmovil.ui.screens.LoginScreen
 import com.example.level_upmovil.ui.screens.ProfileScreen
-import com.example.level_upmovil.ui.screens.RegisterScreen
 import com.example.level_upmovil.ui.theme.LevelupMovilTheme
-sealed class Screen(val route: String) {
-    object Home : Screen("home")
-    object Profile : Screen("profile")
-    object Registro: Screen("registro")
-    object Login: Screen("login")
-}
+import com.example.level_upmovil.viewmodel.MainViewModel
+import kotlinx.coroutines.flow.collectLatest
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LevelupMovilTheme (
-                darkTheme = true , dynamicColor = false
-            ){AppNavigation(startDestination = Screen.Login.route)
+            LevelupMovilTheme(darkTheme = true, dynamicColor = false) {
+
+
+                val viewModel: MainViewModel = viewModel()
+                val navController = rememberNavController()
+
+                LaunchedEffect(key1 = Unit) {
+                    viewModel.navigationEvents.collectLatest { event ->
+                        when (event) {
+                            is NavigationEvent.NavigateTo -> {
+                                navController.navigate(event.route.route) {
+                                    event.popUpRoute?.let {
+                                        popUpTo(route = it.route) {
+                                            inclusive = event.inclusive
+                                        }
+                                    }
+                                    launchSingleTop = event.singleTop
+                                    restoreState = true
+                                }
+                            }
+
+                            is NavigationEvent.PopBackStack -> navController.popBackStack()
+                            is NavigationEvent.NavigateUp -> navController.navigateUp()
+                        }
+                    }
+                }
+
+                /*Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->*/
+
+                NavHost(
+                    navController = navController,
+                    startDestination = Screen.Home.route,
+                    //modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    composable(route = Screen.Home.route) {
+                        HomeScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable(route = Screen.Profile.route) {
+                        ProfileScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable (route = Screen.Catalogo.route){
+                        CatalogoScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable (route = Screen.DetalleProducto.route,
+                        arguments = listOf(
+                            navArgument("productoId"){
+                                type = NavType.IntType
+                                defaultValue = -1
+                            }
+                        )
+                    ){backStackEntry ->
+                        val productoId = backStackEntry.arguments?.getInt("productoId") ?: -1
+
+                        val onAddAction: (Producto) -> Unit = {producto ->
+                            println("Acción de agregar al carro pendiente")
+                        }
+
+                        DetalleProductoScreen(
+                            productoId = productoId,
+                            navController = navController,
+                            viewModel = viewModel
+                            //onAddToCartClick =onAddAction
+                        )
+                    }
+
+                    composable(route = Screen.Carrito.route) {
+                        CarritoScreen(navController = navController, viewModel = viewModel)
+                    }
+                }
             }
         }
     }
+
 }
 
+
+/*@Composable
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Text(
+        text = "Hello $name!",
+        modifier = modifier
+    )
+}
+
+@Preview(showBackground = true)
 @Composable
-fun AppNavigation(startDestination: String) {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = startDestination) {
-
-
-        composable(Screen.Login.route) {
-            LoginScreen (
-                onNavigateToRegister = { navController.navigate(Screen.Registro.route) },
-                onLoginSuccess = {
-
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-
-        composable(Screen.Registro.route) {
-            RegisterScreen(
-                onNavigateToLogin = { navController.popBackStack() },
-                onRegistrationSuccess = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-
-        composable(Screen.Home.route) {
-            HomeScreen (
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
-            )
-        }
-
-
-        composable(Screen.Profile.route) {
-            ProfileScreen(onNavigateToHome = { navController.navigate(Screen.Home.route) }
-            )
-        }
+fun GreetingPreview() {
+    LevelupMovilTheme {
+        Greeting("Android")
     }
-}
+}*/
