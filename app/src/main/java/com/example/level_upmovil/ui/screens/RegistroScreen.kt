@@ -15,16 +15,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.level_upmovil.navigation.Screen
+import com.example.level_upmovil.ui.components.AppScaffold
 import com.example.level_upmovil.ui.theme.OrbitronFamily
+import com.example.level_upmovil.viewmodel.MainViewModel
 
 
 private val emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}".toRegex()
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun RegisterScreen(
-    onNavigateToLogin: () -> Unit,
-    onRegistrationSuccess: () -> Unit
+fun RegistroScreen(
+    navController: NavController,
+    viewModel: MainViewModel = viewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -45,9 +50,11 @@ fun RegisterScreen(
         return !nameError && !emailError && !passwordError
     }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Registro") }) }
-    ) { paddingValues ->
+    AppScaffold(
+        navController = navController,
+        viewModel = viewModel,
+        title = "Registro"
+    ){ paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -101,7 +108,9 @@ fun RegisterScreen(
                 onClick = {
                     if (validateInputs()) {
                         println("Usuario Registrado: $name, $email")
-                        onRegistrationSuccess()
+                        viewModel.navigateTo(
+                            screen = Screen.Login
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -112,7 +121,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
 
-            TextButton(onClick = onNavigateToLogin) {
+            TextButton(onClick = {viewModel.navigateTo(Screen.Login)}) {
                 Text("¿Ya tienes cuenta? Inicia Sesión")
             }
         }

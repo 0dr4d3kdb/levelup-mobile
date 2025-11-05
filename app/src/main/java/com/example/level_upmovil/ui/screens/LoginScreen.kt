@@ -14,21 +14,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.level_upmovil.navigation.Screen
+import com.example.level_upmovil.ui.components.AppScaffold
 import com.example.level_upmovil.ui.theme.OrbitronFamily
+import com.example.level_upmovil.viewmodel.MainViewModel
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun LoginScreen(
-    onNavigateToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit
+    navController: NavController,
+    viewModel: MainViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     val isLoginEnabled = email.isNotEmpty() && password.isNotEmpty()
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Login") }) }
+    AppScaffold(
+        navController = navController,
+        viewModel = viewModel,
+        title = "Login"
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -68,7 +75,9 @@ fun LoginScreen(
             Button(
                 onClick = {
                     if (email == "arturo@gmail.com" && password == "123456") {
-                        onLoginSuccess()
+                        viewModel.navigateTo(
+                            screen = Screen.Home
+                        )
                     } else if (isLoginEnabled) {
                         println("Credenciales incorrectas")
                     }
@@ -81,7 +90,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextButton(onClick = onNavigateToRegister) {
+            TextButton(onClick ={viewModel.navigateTo(Screen.Registro)}) {
                 Text("¿No tienes cuenta? Regístrate")
             }
         }

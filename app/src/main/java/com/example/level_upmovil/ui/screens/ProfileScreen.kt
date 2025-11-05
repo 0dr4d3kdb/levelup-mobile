@@ -78,7 +78,7 @@ fun ProfilePicture(
     }
 }
 
-// 1. Firma actualizada para aceptar NavController y MainViewModel
+
 @Composable
 fun ProfileScreen(
     navController: NavController,
@@ -94,12 +94,12 @@ fun ProfileScreen(
         }
     )
 
-    // 2. Envolvemos la pantalla en el AppScaffold
+
     AppScaffold(
         navController = navController,
         viewModel = viewModel,
-        title = "Perfil" // Título para la TopAppBar
-    ) { innerPadding -> // 3. Aplicamos el innerPadding
+        title = "Perfil"
+    ) { innerPadding ->
 
         Column (
             modifier = Modifier
