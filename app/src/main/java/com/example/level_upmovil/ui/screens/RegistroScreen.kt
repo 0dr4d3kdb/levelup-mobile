@@ -21,6 +21,7 @@ import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.ui.components.AppScaffold
 import com.example.level_upmovil.ui.theme.OrbitronFamily
 import com.example.level_upmovil.viewmodel.MainViewModel
+import com.example.level_upmovil.viewmodel.RegistrationStatus
 
 
 private val emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}".toRegex()
@@ -31,6 +32,7 @@ fun RegistroScreen(
     navController: NavController,
     viewModel: MainViewModel = viewModel()
 ) {
+    // Estados locales para los campos de entrada
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -39,6 +41,31 @@ fun RegistroScreen(
     var nameError by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf(false) }
+
+    // 💥 Observar el estado de la operación POST desde el ViewModel
+    val registrationStatus by viewModel.registrationStatus.collectAsState()
+    val isApiLoading = registrationStatus == RegistrationStatus.Loading
+
+    // Snackbar para mostrar mensajes de error/éxito
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // 💥 Manejo de la navegación y errores de la API
+    LaunchedEffect(registrationStatus) {
+        when (registrationStatus) {
+            is RegistrationStatus.Success -> {
+                // El ViewModel ya maneja la navegación a Screen.Login.
+                // Aquí solo mostramos un mensaje final.
+                snackbarHostState.showSnackbar("✅ Registro exitoso. Ahora puedes iniciar sesión.", duration = SnackbarDuration.Long)
+                viewModel.resetRegistrationStatus()
+            }
+            is RegistrationStatus.Error -> {
+                val errorMessage = (registrationStatus as RegistrationStatus.Error).message
+                snackbarHostState.showSnackbar(errorMessage, duration = SnackbarDuration.Long)
+                viewModel.resetRegistrationStatus() // Resetear para que el usuario pueda reintentar
+            }
+            else -> Unit
+        }
+    }
 
     fun validateInputs(): Boolean {
         nameError = name.length < 3
