@@ -1,29 +1,20 @@
 package com.example.level_upmovil.viewmodel
 
-
+import android.util.Log
 import retrofit2.HttpException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.level_upmovil.model.CartItem
 import com.example.level_upmovil.model.Producto
-import com.example.level_upmovil.model.Usuario
-import com.example.level_upmovil.model.listaProductos
+import com.example.level_upmovil.model.Usuario // Necesario si aún usas 'listaProductos' en getProductoById
 import com.example.level_upmovil.navigation.NavigationEvent
 import com.example.level_upmovil.navigation.Screen
-import com.example.level_upmovil.remote.ApiServiceUsuario
 import com.example.level_upmovil.remote.RetrofitClient
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.* // Importamos todo para map, stateIn, SharingStarted
 import kotlinx.coroutines.launch
 import java.io.IOException
 
-
+// --- ESTADOS DE LA UI ---
 sealed class RegistrationStatus {
     data object Idle : RegistrationStatus()
     data object Loading : RegistrationStatus()
@@ -31,61 +22,100 @@ sealed class RegistrationStatus {
     data class Error(val message: String) : RegistrationStatus()
 }
 
+sealed class ProductListStatus {
+    data object Idle : ProductListStatus()
+    data object Loading : ProductListStatus()
+    data class Success(val products: List<Producto>) : ProductListStatus()
+    data class Error(val message: String) : ProductListStatus()
+}
 
-// 2. Quitamos 'productoDao' del constructor
 class MainViewModel : ViewModel() {
 
-    // 3. Reemplazamos el Flow de Room con la lista estática
-    //    (Usamos un StateFlow para que CatalogoScreen siga funcionando si usaba collectAsState)
-    private val _productos = MutableStateFlow(listaProductos)
-    val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
+    // 1. INSTANCIA DEL SERVICIO (Usamos el cliente definido en remote/RetrofitClient.kt)
+    private val apiService = RetrofitClient.apiServiceUsuario
 
-    // 4. Creamos la función de búsqueda en la lista estática (usando Int)
-    fun getProductoById(id: Int): Producto? {
-        return listaProductos.find { it.id == id }
+    // --- LÓGICA DE PRODUCTOS (Reemplazamos lista estática por API) ---
+    private val _productsStatus = MutableStateFlow<ProductListStatus>(ProductListStatus.Idle)
+    val productsStatus: StateFlow<ProductListStatus> = _productsStatus.asStateFlow()
+
+    // Flujo simplificado que extrae la lista de productos del estado ProductListStatus
+    val productos: StateFlow<List<Producto>> = _productsStatus.map { status ->
+        when (status) {
+            is ProductListStatus.Success -> status.products
+            else -> emptyList()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    // Inicializar la carga de productos al crear el ViewModel
+    init {
+        fetchProductos()
     }
+
+    // Función para obtener los productos de la API
+    fun fetchProductos() {
+        viewModelScope.launch {
+            _productsStatus.value = ProductListStatus.Loading
+            try {
+                val response = apiService.getAllProductos()
+
+                if (response.isSuccessful && response.body() != null) {
+                    _productsStatus.value = ProductListStatus.Success(response.body()!!)
+                } else {
+                    val errorDetail = response.errorBody()?.string() ?: "Error desconocido al obtener productos."
+                    _productsStatus.value = ProductListStatus.Error("Fallo HTTP: ${response.code()}. Detalle: $errorDetail")
+                }
+            } catch (e: IOException) {
+                Log.e("API_CALL", "Error de red: ${e.message}") // Añade esta línea
+                _productsStatus.value = ProductListStatus.Error("Error de red: Sin conexión a internet.")
+            } catch (e: HttpException) {
+                _productsStatus.value = ProductListStatus.Error("Error del servidor: ${e.code()}")
+            }
+
+        }
+    }
+
+    // Función de búsqueda (se mantiene la búsqueda en la lista estática original, pero DEBERÍA usar la lista del API)
+    // Para ser funcional, debería buscar en la lista obtenida del API: productos.value.find { ... }
+    fun getProductoById(id: Int): Producto? {
+        return productos.value.find { it.id == id } // Buscamos en el StateFlow 'productos' del API
+    }
+
+    // --- LÓGICA DE REGISTRO ---
     private val _registrationStatus = MutableStateFlow<RegistrationStatus>(RegistrationStatus.Idle)
     val registrationStatus: StateFlow<RegistrationStatus> = _registrationStatus.asStateFlow()
 
-    // 2. Función de Registro
     fun registerNewUser(nombre: String, correo: String, password: String) {
-        // Ejecutamos en el background
         viewModelScope.launch {
-            _registrationStatus.value = RegistrationStatus.Loading // Mostrar spinner
+            _registrationStatus.value = RegistrationStatus.Loading
 
             val newUser = Usuario(nombre = nombre, correo = correo, password = password)
 
             try {
-                // 🛑 Asumimos que tienes una instancia de ApiService aquí (Ej: RetrofitClient.apiService)
                 val response = RetrofitClient.apiServiceUsuario.saveUsuario(newUser)
 
                 if (response.isSuccessful) {
-                    _registrationStatus.value = RegistrationStatus.Success // Éxito!
-                    // Navegar al Login o a Home (usando tu método navigateTo)
+                    _registrationStatus.value = RegistrationStatus.Success
                     navigateTo(Screen.Login, popUpRoute = Screen.Registro, inclusive = true)
 
                 } else {
-                    // Manejar errores 4xx, 5xx del servidor
                     val errorDetail = response.errorBody()?.string() ?: "Error desconocido en el servidor."
                     _registrationStatus.value = RegistrationStatus.Error("Fallo en el registro: $errorDetail")
                 }
             } catch (e: IOException) {
-                // Error de red (sin internet)
                 _registrationStatus.value = RegistrationStatus.Error("Error de conexión. Revisa tu internet.")
             } catch (e: HttpException) {
-                // Otros errores HTTP no manejados
                 _registrationStatus.value = RegistrationStatus.Error("Error del servidor: ${e.message}")
             }
         }
     }
 
-    // 3. Método para resetear el estado después de un error
     fun resetRegistrationStatus() {
         _registrationStatus.value = RegistrationStatus.Idle
     }
 
+    // --- LÓGICA DE NAVEGACIÓN ---
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
-
     val navigationEvents: SharedFlow<NavigationEvent> = _navigationEvents.asSharedFlow()
 
     private val _uiEvents = MutableSharedFlow<String>()
@@ -115,63 +145,42 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    // --- LÓGICA DEL CARRITO ---
     private val _carrito = MutableStateFlow<List<CartItem>>(emptyList())
     val carrito: StateFlow<List<CartItem>> = _carrito.asStateFlow()
 
     fun agregarAlCarrito(producto: Producto){
+        // ... (lógica del carrito, no modificada)
         _carrito.update { currentItems ->
+            // ... (código)
             val itemExistente = currentItems.find { it.producto.id == producto.id }
-
             if (itemExistente != null){
                 currentItems.map { item ->
-                    if(item.producto.id == producto.id){
-                        item.copy(cantidad = item.cantidad + 1)
-                    } else {
-                        item
-                    }
+                    if(item.producto.id == producto.id){ item.copy(cantidad = item.cantidad + 1) } else { item }
                 }
-            } else {
-                currentItems + CartItem(producto = producto, cantidad = 1)
-            }
+            } else { currentItems + CartItem(producto = producto, cantidad = 1) }
         }
-
-        viewModelScope.launch {
-            _uiEvents.emit("✅ ${producto.nombre} agregado al carro.")
-        }
+        viewModelScope.launch { _uiEvents.emit("✅ ${producto.nombre} agregado al carro.") }
     }
 
     fun removerDelCarrito(producto: Producto){
+        // ... (lógica del carrito, no modificada)
         _carrito.update { currentItems ->
             val itemExistente = currentItems.find { it.producto.id == producto.id }
-
             if (itemExistente != null) {
                 if (itemExistente.cantidad > 1) {
                     currentItems.map { item ->
-                        if (item.producto.id == producto.id){
-                            item.copy(cantidad = item.cantidad -1)
-                        } else {
-                            item
-                        }
+                        if (item.producto.id == producto.id){ item.copy(cantidad = item.cantidad -1) } else { item }
                     }
-                } else {
-                    currentItems.filter { it.producto.id != producto.id }
-                }
-            } else {
-                currentItems
-            }
+                } else { currentItems.filter { it.producto.id != producto.id } }
+            } else { currentItems }
         }
-
-        viewModelScope.launch {
-            _uiEvents.emit("✅ Se ha removido 1 ${producto.nombre} del carro.")
-        }
+        viewModelScope.launch { _uiEvents.emit("✅ Se ha removido 1 ${producto.nombre} del carro.") }
     }
 
     fun eliminarProductoDelCarrito(producto: Producto){
-        _carrito.update { currentItems ->
-            currentItems.filter { it.producto.id != producto.id }
-        }
-        viewModelScope.launch {
-            _uiEvents.emit("✅ Se ha eliminado ${producto.nombre} del carro.")
-        }
+        // ... (lógica del carrito, no modificada)
+        _carrito.update { currentItems -> currentItems.filter { it.producto.id != producto.id } }
+        viewModelScope.launch { _uiEvents.emit("✅ Se ha eliminado ${producto.nombre} del carro.") }
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,6 +46,9 @@ import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.ui.components.AppScaffold
 import com.example.level_upmovil.viewmodel.MainViewModel
 
+// 💥 NUEVA IMPORTACIÓN DE COIL
+import coil.compose.AsyncImage
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarritoScreen(
@@ -62,13 +66,9 @@ fun CarritoScreen(
         viewModel = viewModel,
         title = "Carro de compras"
     ) { innerPadding ->
-
-
-
         Column(
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding).fillMaxSize()
         ) {
-
             if (itemsCarrito.isEmpty()){
                 Box(
                     modifier = Modifier
@@ -78,20 +78,23 @@ fun CarritoScreen(
                 ){
                     Text(text = "¡El carro de compras está vacío!")
                 }
-            }
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(itemsCarrito) {cartItem ->
-                    CarritoItems(
-                        cartItem = cartItem,
-                        onItemClick = onProductoClick,
-                        viewModel = viewModel
-                    )
+            } else { // 💥 Agregamos el else para evitar que el Box se superponga
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(itemsCarrito) {cartItem ->
+                        CarritoItems(
+                            cartItem = cartItem,
+                            onItemClick = onProductoClick,
+                            viewModel = viewModel
+                        )
+                    }
                 }
+
+                // Opcional: Mostrar un resumen de compra o un botón de checkout
+                // Button(onClick = { /* ... */ }) { Text("Checkout") }
             }
         }
     }
@@ -112,9 +115,10 @@ fun CarritoItems(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(
-                painter = painterResource(cartItem.producto.imageResId),
-                contentDescription = (cartItem.producto.nombre),
+            // 💥 REEMPLAZAMOS Image/painterResource por AsyncImage
+            AsyncImage(
+                model = cartItem.producto.imageResId, // 💥 Usamos la URL (String)
+                contentDescription = cartItem.producto.nombre,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(80.dp)
@@ -133,25 +137,26 @@ fun CarritoItems(
                 )
                 Text(text = cartItem.producto.nombre)
 
+                // 💥 Mostrar el precio total por item (opcional, pero buena práctica)
+                val itemTotalPrice = cartItem.producto.precio.toFloatOrNull()?.times(cartItem.cantidad) ?: "Error"
 
                 Text(
-                    text = "Precio: ${cartItem.producto.precio}"
+                    text = "Precio/u: ${cartItem.producto.precio}"
+                )
+                Text(
+                    text = "Total: $${String.format("%.2f", itemTotalPrice)}"
                 )
 
                 Text(
-                    text = "Cant: "
-                )
-
-                Text(
-                    text = "${cartItem.cantidad}"
+                    text = "Cant: ${cartItem.cantidad}",
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-
             Spacer(modifier = Modifier.width(16.dp))
 
+            // Columna de Controles
             Column(
-                modifier = Modifier.weight(0.5f),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -161,16 +166,14 @@ fun CarritoItems(
                 ){
                     IconButton(
                         onClick = { viewModel.removerDelCarrito(cartItem.producto) },
-                        modifier = Modifier
-                            .size(32.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(Icons.Default.Remove, contentDescription = "Restar cantidad")
                     }
 
                     IconButton(
                         onClick = {viewModel.agregarAlCarrito(cartItem.producto) },
-                        modifier = Modifier
-                            .size(32.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Aumentar cantidad")
                     }
@@ -178,19 +181,13 @@ fun CarritoItems(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row (
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    IconButton(
-                        onClick = {viewModel.eliminarProductoDelCarrito(cartItem.producto) },
-                        modifier = Modifier
-                            .size(32.dp)
-                    ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Eliminar del carro")
-                    }
+                IconButton(
+                    onClick = {viewModel.eliminarProductoDelCarrito(cartItem.producto) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminar del carro", tint = MaterialTheme.colorScheme.error)
                 }
             }
         }
     }
 }
-

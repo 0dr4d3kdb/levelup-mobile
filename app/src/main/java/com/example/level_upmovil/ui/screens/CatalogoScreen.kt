@@ -1,68 +1,32 @@
 package com.example.level_upmovil.ui.screens
 
-import com.example.level_upmovil.ui.components.AppScaffold
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import com.example.level_upmovil.R
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.level_upmovil.model.Producto
-import com.example.level_upmovil.model.listaProductos
 import com.example.level_upmovil.navigation.Screen
+import com.example.level_upmovil.ui.components.AppScaffold
 import com.example.level_upmovil.viewmodel.MainViewModel
-import kotlinx.coroutines.launch
+import com.example.level_upmovil.viewmodel.ProductListStatus // 💥 IMPORTACIÓN NECESARIA
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,10 +34,20 @@ fun CatalogoScreen(
     navController: NavController,
     viewModel: MainViewModel = viewModel()
 ){
-    val productos = listaProductos
+    // 💥 1. Observar el estado de la API
+    val productsStatus by viewModel.productsStatus.collectAsState()
 
+    // 2. Variables de estado locales
     var searchText by remember { mutableStateOf("") }
-    var filteredProductos by remember { mutableStateOf(productos) }
+
+    // 3. Obtener la lista de productos del estado (si es Success)
+    val currentProducts = when (productsStatus) {
+        is ProductListStatus.Success -> (productsStatus as ProductListStatus.Success).products
+        else -> emptyList()
+    }
+
+    // 4. Inicializar y actualizar la lista filtrada con los datos del API
+    var filteredProductos by remember(currentProducts) { mutableStateOf(currentProducts) }
 
     val onReviewAction: (Producto) -> Unit = { producto ->
         navController.navigate(Screen.DetalleProducto.createRoute(producto.id))
@@ -83,15 +57,20 @@ fun CatalogoScreen(
         viewModel.agregarAlCarrito(producto)
     }
 
-    // 2. FUNCIÓN DE FILTRADO
+    // 5. FUNCIÓN DE FILTRADO (Ahora opera sobre currentProducts)
     val performSearch: () -> Unit = {
         filteredProductos = if (searchText.isBlank()) {
-            productos
+            currentProducts
         } else {
-            productos.filter {
+            currentProducts.filter {
                 it.nombre.contains(searchText, ignoreCase = true)
             }
         }
+    }
+
+    // 6. Asegurar que el filtro se aplique al cargar datos
+    LaunchedEffect(currentProducts) {
+        performSearch()
     }
 
 
@@ -108,59 +87,86 @@ fun CatalogoScreen(
                 .fillMaxSize()
         ) {
 
+            // 7. Mostrar la barra de búsqueda y el botón solo si no hay un error crítico
+            if (productsStatus !is ProductListStatus.Error) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ){
+                    OutlinedTextField(
+                        value = searchText,
+                        onValueChange = {
+                            searchText = it
+                            if (it.isEmpty()) performSearch()
+                        },
+                        label = { Text("Buscar producto") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ){
-                OutlinedTextField(
-                    value = searchText,
-
-                    onValueChange = {
-                        searchText = it
-
-                        if (it.isEmpty()) performSearch()
-                    },
-                    label = { Text("Buscar producto") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Button(
-                    onClick = performSearch,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39FF14))
-                ) {
-                    Text(text = "Buscar")
+                    Button(
+                        onClick = performSearch,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39FF14))
+                    ) {
+                        Text(text = "Buscar")
+                    }
                 }
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
 
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(filteredProductos){ producto ->
-                    ProductoCard(
-                        producto = producto,
-                        onReviewClick = onReviewAction,
-                        onAddToCartClick = onAddAction,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
+            // 8. BLOQUE CONDICIONAL PARA MANEJAR EL ESTADO DE CARGA/ERROR
+            when (productsStatus) {
+
+                ProductListStatus.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                is ProductListStatus.Error -> {
+                    val errorMessage = (productsStatus as ProductListStatus.Error).message
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(text = "❌ Error al cargar productos: $errorMessage", textAlign = TextAlign.Center, modifier = Modifier.padding(24.dp))
+                        Spacer(Modifier.height(16.dp))
+                        Button(onClick = { viewModel.fetchProductos() }) {
+                            Text("Reintentar Carga")
+                        }
+                    }
+                }
+
+                is ProductListStatus.Success, ProductListStatus.Idle -> {
+                    // Mostrar la lista (se usará la lista filtrada)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(filteredProductos){ producto ->
+                            ProductoCard(
+                                producto = producto,
+                                onReviewClick = onReviewAction,
+                                onAddToCartClick = onAddAction,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+// ProductoCard (No necesita cambios si ya usa el modelo Producto)
 @Composable
 fun ProductoCard(
     producto: Producto,
@@ -182,15 +188,21 @@ fun ProductoCard(
                 .fillMaxSize()
                 .padding(vertical = 15.dp)
         ) {
-            Image(
-                painter = painterResource(id = producto.imageResId),
+            AsyncImage(
+                // 🛑 Reemplaza 'imageResId' por 'imageUrl' si cambiaste el nombre del campo.
+                model = producto.imageResId,
+
                 contentDescription = producto.nombre,
+
+                // Estos modificadores de estilo se mantienen iguales:
                 modifier = Modifier
                     .width(150.dp)
                     .height(150.dp)
-                    .padding(top = 15.dp)
-            )
+                    .padding(top = 15.dp),
 
+                // Añade el escalado si lo necesitas:
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit
+            )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = producto.nombre,
@@ -203,10 +215,9 @@ fun ProductoCard(
 
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = producto.precio,
+                text = producto.precio, // Asumiendo que 'producto.precio' es String o tiene formato adecuado
                 fontWeight = FontWeight.SemiBold,
-
-                )
+            )
 
             Spacer(modifier = Modifier.height(6.dp))
             Button(

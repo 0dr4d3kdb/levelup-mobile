@@ -1,4 +1,5 @@
 package com.example.level_upmovil.remote
+ import com.example.level_upmovil.model.Producto
  import com.example.level_upmovil.model.Usuario
  import retrofit2.Response
  import retrofit2.http.GET
@@ -15,4 +16,6 @@ interface ApiServiceUsuario {
  suspend fun getAllUsuarios(): Response<List<Usuario>>
  @GET("api/usuarios/{id}")
  suspend fun getUsuarioById(@Path("id") id: Long): Response<Usuario>
+ @GET("/api/productos")
+ suspend fun getAllProductos(): Response<List<Producto>>
 }

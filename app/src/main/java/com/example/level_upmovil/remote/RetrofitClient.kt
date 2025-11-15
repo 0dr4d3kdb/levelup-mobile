@@ -4,7 +4,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl("http://localhost:8181/api/usuarios/")
+            .baseUrl("http://10.0.2.2:8181/")
             .addConverterFactory(GsonConverterFactory.create()) // Conversor de JSON (GSON)
             .build()
     }
