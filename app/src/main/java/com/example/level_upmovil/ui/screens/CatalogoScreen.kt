@@ -191,7 +191,6 @@ fun ProductoCard(
             AsyncImage(
                 // 🛑 Reemplaza 'imageResId' por 'imageUrl' si cambiaste el nombre del campo.
                 model = producto.imageResId,
-
                 contentDescription = producto.nombre,
 
                 // Estos modificadores de estilo se mantienen iguales:
@@ -202,6 +201,7 @@ fun ProductoCard(
 
                 // Añade el escalado si lo necesitas:
                 contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(

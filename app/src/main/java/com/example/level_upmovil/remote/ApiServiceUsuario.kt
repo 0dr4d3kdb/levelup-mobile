@@ -8,14 +8,16 @@ package com.example.level_upmovil.remote
  import retrofit2.http.Body
 
 interface ApiServiceUsuario {
- @POST("api/usuarios/{id}")
+ @POST("api/auth/registro")
  suspend fun saveUsuario(
   @Body usuario: Usuario
  ): Response<Usuario>
  @GET("api/usuarios")
  suspend fun getAllUsuarios(): Response<List<Usuario>>
- @GET("api/usuarios/{id}")
- suspend fun getUsuarioById(@Path("id") id: Long): Response<Usuario>
+ //@GET("api/usuarios/{id}")
+ //suspend fun getProductoPorId(@Path("id") productoId: Int): Producto
  @GET("/api/productos")
  suspend fun getAllProductos(): Response<List<Producto>>
+ @GET("api/productos/{id}")
+ suspend fun getProductoPorId(@Path("id") productoId: Int): Producto
 }

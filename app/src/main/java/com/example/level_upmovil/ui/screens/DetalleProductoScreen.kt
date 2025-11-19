@@ -1,6 +1,7 @@
 package com.example.level_upmovil.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,8 +12,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -21,8 +27,6 @@ import androidx.navigation.NavController
 import com.example.level_upmovil.model.Producto
 import com.example.level_upmovil.ui.components.AppScaffold
 import com.example.level_upmovil.viewmodel.MainViewModel
-
-// 💥 NUEVA IMPORTACIÓN DE COIL
 import coil.compose.AsyncImage
 
 @Composable
@@ -31,31 +35,46 @@ fun DetalleProductoScreen(
     navController: NavController,
     viewModel: MainViewModel
 ){
-    // 💥 1. Obtener el producto del ViewModel (que usa la lista cargada de la API)
-    // Usamos viewModel.productos.collectAsState().value para tener los productos más recientes del API
-    // y luego buscamos por ID.
-    val producto = viewModel.getProductoById(productoId)
+
+    // 💥 1. Observar el StateFlow de Producto individual
+    val producto by viewModel.productoDetalle.collectAsState()
+
+    // 💥 2. Iniciar la carga del producto al entrar a la pantalla (Fetching Directo)
+    LaunchedEffect(productoId) {
+        viewModel.fetchProductoDetalle(productoId)
+    }
 
     val scrollState = rememberScrollState()
 
+    // 💥 3. Manejo de Carga/Error
     if (producto == null){
-        // 💥 Mostrar un indicador de carga o un mensaje de "no encontrado" si la lista está vacía
-        Text(
-            text = "Buscando producto con ID $productoId...",
-            modifier = Modifier.padding(16.dp)
-        )
-        // Puedes añadir un CircularProgressIndicator aquí si la lista de productos aún está cargando.
-        return
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ){
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator() // 💡 Indicador visual mientras carga
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "Cargando detalles del producto ID $productoId...",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+        return // 🛑 Retornar para evitar que el resto del código Composable se ejecute
     }
 
-    val onAddToCartClick: (Producto) -> Unit = { producto ->
-        viewModel.agregarAlCarrito(producto)
+    // 💥 Si llegamos aquí, 'producto' ya no es null. Usamos el operador '!!' de forma segura.
+    val currentProducto = producto!!
+
+    val onAddToCartClick: (Producto) -> Unit = { p ->
+        viewModel.agregarAlCarrito(p)
     }
 
     AppScaffold(
         navController = navController,
         viewModel = viewModel,
-        title = producto.nombre // Usamos el nombre del producto encontrado
+        title = currentProducto.nombre
     ){ innerPadding ->
         Column (
             modifier = Modifier
@@ -65,36 +84,37 @@ fun DetalleProductoScreen(
                 .verticalScroll(scrollState)
         ){
 
-            // 💥 2. Reemplazamos Image/painterResource por AsyncImage (Coil)
             AsyncImage(
-                model = producto.imageResId, // Asumiendo que el campo String con la URL es 'imageUrl'
-                contentDescription = producto.nombre,
+                model = currentProducto.imageResId,
+                contentDescription = currentProducto.nombre,
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = producto.nombre,
+                text = currentProducto.nombre,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(16.dp))
-            // 🛑 Asumo que tu Producto.kt tiene un campo 'descripcion'
+
+            // La descripción usa el valor seguro del objeto cargado
             Text(
-                text = producto.descripcion
+                text = currentProducto.descripcion ?: "Información detallada no disponible."
             )
+
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = producto.precio
+                text = currentProducto.precio
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = {onAddToCartClick(producto)},
+                onClick = {onAddToCartClick(currentProducto)},
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF39FF14)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Agregar al carro")
             }
-            Spacer(modifier = Modifier.height(32.dp)) // Espacio al final para el scroll
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

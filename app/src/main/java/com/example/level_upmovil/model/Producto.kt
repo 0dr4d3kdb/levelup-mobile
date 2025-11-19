@@ -1,15 +1,18 @@
 package com.example.level_upmovil.model
 import com.example.level_upmovil.R
+import com.google.gson.annotations.SerializedName
 
 
 data class Producto(
     val id: Int,
     val nombre: String,
     val precio: String,
+    @SerializedName("imagenUrl")
     val imageResId: String,
-    val descripcion: String,
-    val categoria: String,
-    val precioInt: Int
+    @SerializedName("descripcion")
+    val descripcion: String?= "Sin descripcion disponible",
+    val categoria: String? = null, // Si el API no la manda, no falla
+    val precioInt: Int? = null
 )
 
 //val listaProductos = listOf(

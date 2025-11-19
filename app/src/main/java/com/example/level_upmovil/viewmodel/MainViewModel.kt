@@ -36,6 +36,8 @@ class MainViewModel : ViewModel() {
 
     // --- LÓGICA DE PRODUCTOS (Reemplazamos lista estática por API) ---
     private val _productsStatus = MutableStateFlow<ProductListStatus>(ProductListStatus.Idle)
+    private val _productoDetalle = MutableStateFlow<Producto?>(null)
+    val productoDetalle: StateFlow<Producto?> = _productoDetalle.asStateFlow()
     val productsStatus: StateFlow<ProductListStatus> = _productsStatus.asStateFlow()
 
     // Flujo simplificado que extrae la lista de productos del estado ProductListStatus
@@ -72,6 +74,27 @@ class MainViewModel : ViewModel() {
                 _productsStatus.value = ProductListStatus.Error("Error del servidor: ${e.code()}")
             }
 
+        }
+    }
+    fun fetchProductoDetalle(productoId: Int) {
+        viewModelScope.launch {
+            // Limpiamos el estado anterior para indicar que estamos cargando algo nuevo
+            _productoDetalle.value = null
+
+            try {
+                // 🛑 Llama al método de tu ApiService que usa el endpoint /productos/{id}
+                val producto = RetrofitClient.apiServiceUsuario.getProductoPorId(productoId)
+
+                _productoDetalle.value = producto
+
+            } catch (e: IOException) {
+                Log.e("DetalleAPI", "Error de red al buscar producto $productoId: ${e.message}")
+                // Podrías establecer un error específico si lo necesitas
+            } catch (e: HttpException) {
+                Log.e("DetalleAPI", "Error HTTP al buscar producto $productoId: ${e.code()}")
+            } catch (e: Exception) {
+                Log.e("DetalleAPI", "Error desconocido: ${e.message}")
+            }
         }
     }
 
