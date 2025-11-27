@@ -6,13 +6,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.level_upmovil.model.CartItem
 import com.example.level_upmovil.model.Producto
-import com.example.level_upmovil.model.Usuario // Necesario si aún usas 'listaProductos' en getProductoById
+import com.example.level_upmovil.model.Usuario
 import com.example.level_upmovil.navigation.NavigationEvent
 import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.remote.RetrofitClient
-import kotlinx.coroutines.flow.* // Importamos todo para map, stateIn, SharingStarted
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.text.NumberFormat
+import java.util.Locale
 
 // --- ESTADOS DE LA UI ---
 sealed class RegistrationStatus {
@@ -31,16 +33,25 @@ sealed class ProductListStatus {
 
 class MainViewModel : ViewModel() {
 
-    // 1. INSTANCIA DEL SERVICIO (Usamos el cliente definido en remote/RetrofitClient.kt)
+    // 1. INSTANCIA DEL SERVICIO
     private val apiService = RetrofitClient.apiServiceUsuario
 
-    // --- LÓGICA DE PRODUCTOS (Reemplazamos lista estática por API) ---
+    // --- LÓGICA DE PRODUCTOS ---
+
+    // Estado del Catálogo (usando ProductListStatus para errores y carga)
     private val _productsStatus = MutableStateFlow<ProductListStatus>(ProductListStatus.Idle)
-    private val _productoDetalle = MutableStateFlow<Producto?>(null)
-    val productoDetalle: StateFlow<Producto?> = _productoDetalle.asStateFlow()
     val productsStatus: StateFlow<ProductListStatus> = _productsStatus.asStateFlow()
 
-    // Flujo simplificado que extrae la lista de productos del estado ProductListStatus
+    // 💥 [CORRECCIÓN 1]: Estado para el detalle de un producto
+    private val _productoDetalle = MutableStateFlow<Producto?>(null)
+    val productoDetalle: StateFlow<Producto?> = _productoDetalle.asStateFlow()
+
+    // 💥 [CORRECCIÓN 2]: Estado para los productos de la Home Screen
+    private val _homeProducts = MutableStateFlow<List<Producto>>(emptyList())
+    val homeProducts: StateFlow<List<Producto>> = _homeProducts.asStateFlow()
+
+
+    // Flujo simplificado que extrae la lista de productos del estado ProductListStatus (para búsqueda, etc.)
     val productos: StateFlow<List<Producto>> = _productsStatus.map { status ->
         when (status) {
             is ProductListStatus.Success -> status.products
@@ -51,57 +62,76 @@ class MainViewModel : ViewModel() {
 
     // Inicializar la carga de productos al crear el ViewModel
     init {
-        fetchProductos()
+        // 💥 [CORRECCIÓN 3]: Llamar a la función específica del Catálogo o Home.
+        // Es mejor dejar esto en la pantalla o hacer una carga inicial mínima.
+        // Llamaremos al catálogo para que la lista 'productos' no esté vacía.
+        fetchCatalogoProductosByIds()
     }
 
-    // Función para obtener los productos de la API
-    fun fetchProductos() {
+    // 💥 [NUEVA FUNCIÓN]: Carga para el Catálogo (Productos 5 al 10)
+    fun fetchCatalogoProductosByIds() {
         viewModelScope.launch {
             _productsStatus.value = ProductListStatus.Loading
-            try {
-                val response = apiService.getAllProductos()
 
-                if (response.isSuccessful && response.body() != null) {
-                    _productsStatus.value = ProductListStatus.Success(response.body()!!)
-                } else {
-                    val errorDetail = response.errorBody()?.string() ?: "Error desconocido al obtener productos."
-                    _productsStatus.value = ProductListStatus.Error("Fallo HTTP: ${response.code()}. Detalle: $errorDetail")
+            // Los IDs que quieres cargar (5, 6, 7, 8, 9, 10)
+            val idsToFetch = listOf(5, 6, 7, 8, 9, 10)
+            val buffer = mutableListOf<Producto>()
+
+            for (id in idsToFetch) {
+                try {
+                    // Llama al endpoint GET /api/productos/{id} para cada ID
+                    val producto = apiService.getProductoPorId(id)
+                    buffer.add(producto)
+                } catch (e: Exception) {
+                    // Si falla un ID, registra el error y actualiza el estado si es necesario
+                    Log.e("CatalogoAPI", "Fallo al cargar producto ID $id: ${e.message}")
+                    // Si falla, podrías decidir cambiar el estado a Error, pero lo mantendremos en buffer.
                 }
-            } catch (e: IOException) {
-                Log.e("API_CALL", "Error de red: ${e.message}") // Añade esta línea
-                _productsStatus.value = ProductListStatus.Error("Error de red: Sin conexión a internet.")
-            } catch (e: HttpException) {
-                _productsStatus.value = ProductListStatus.Error("Error del servidor: ${e.code()}")
             }
 
+            // 3. Actualizamos el StateFlow de Catálogo
+            if (buffer.isNotEmpty()) {
+                _productsStatus.value = ProductListStatus.Success(buffer)
+            } else {
+                // Si el buffer está vacío después de las llamadas (ej: todos los IDs fallaron)
+                _productsStatus.value = ProductListStatus.Error("No se pudieron cargar los productos del catálogo (IDs 5-10).")
+            }
         }
     }
-    fun fetchProductoDetalle(productoId: Int) {
+
+    private val _homeProductsById = MutableStateFlow<List<Producto>>(emptyList())
+    val homeProductsById: StateFlow<List<Producto>> = _homeProductsById.asStateFlow()
+
+
+    // 2. 💥 Nueva función para cargar los IDs deseados (1, 2, 3, 4)
+    fun fetchHomeProductsByIds() {
         viewModelScope.launch {
-            // Limpiamos el estado anterior para indicar que estamos cargando algo nuevo
-            _productoDetalle.value = null
+            // Los IDs que quieres cargar (1 al 4)
+            val idsToFetch = listOf(1, 2, 3, 4)
+            val buffer = mutableListOf<Producto>()
 
-            try {
-                // 🛑 Llama al método de tu ApiService que usa el endpoint /productos/{id}
-                val producto = RetrofitClient.apiServiceUsuario.getProductoPorId(productoId)
+            // Limpiamos la lista al empezar
+            _homeProductsById.value = emptyList()
 
-                _productoDetalle.value = producto
-
-            } catch (e: IOException) {
-                Log.e("DetalleAPI", "Error de red al buscar producto $productoId: ${e.message}")
-                // Podrías establecer un error específico si lo necesitas
-            } catch (e: HttpException) {
-                Log.e("DetalleAPI", "Error HTTP al buscar producto $productoId: ${e.code()}")
-            } catch (e: Exception) {
-                Log.e("DetalleAPI", "Error desconocido: ${e.message}")
+            for (id in idsToFetch) {
+                try {
+                    // Llama al endpoint GET /api/productos/{id} para cada ID
+                    val producto = apiService.getProductoPorId(id)
+                    buffer.add(producto)
+                } catch (e: Exception) {
+                    // Si falla un ID, registra el error y continúa con el siguiente
+                    Log.e("HomeAPI", "Fallo al cargar producto ID $id: ${e.message}")
+                }
             }
+
+            // Actualizamos el StateFlow solo una vez con los resultados
+            _homeProductsById.value = buffer
         }
     }
 
-    // Función de búsqueda (se mantiene la búsqueda en la lista estática original, pero DEBERÍA usar la lista del API)
-    // Para ser funcional, debería buscar en la lista obtenida del API: productos.value.find { ... }
+    // Función de búsqueda local (usa la lista del Catálogo)
     fun getProductoById(id: Int): Producto? {
-        return productos.value.find { it.id == id } // Buscamos en el StateFlow 'productos' del API
+        return productos.value.find { it.id == id }
     }
 
     // --- LÓGICA DE REGISTRO ---
@@ -111,16 +141,14 @@ class MainViewModel : ViewModel() {
     fun registerNewUser(nombre: String, correo: String, password: String) {
         viewModelScope.launch {
             _registrationStatus.value = RegistrationStatus.Loading
-
             val newUser = Usuario(nombre = nombre, correo = correo, password = password)
 
             try {
-                val response = RetrofitClient.apiServiceUsuario.saveUsuario(newUser)
+                val response = RetrofitClient.apiServiceUsuario.registerUsuario(newUser)
 
                 if (response.isSuccessful) {
                     _registrationStatus.value = RegistrationStatus.Success
-                    navigateTo(Screen.Login, popUpRoute = Screen.Registro, inclusive = true)
-
+                  //  navigateTo(Screen.Login, popUpRoute = Screen.Registro, inclusive = true)
                 } else {
                     val errorDetail = response.errorBody()?.string() ?: "Error desconocido en el servidor."
                     _registrationStatus.value = RegistrationStatus.Error("Fallo en el registro: $errorDetail")
@@ -128,7 +156,7 @@ class MainViewModel : ViewModel() {
             } catch (e: IOException) {
                 _registrationStatus.value = RegistrationStatus.Error("Error de conexión. Revisa tu internet.")
             } catch (e: HttpException) {
-                _registrationStatus.value = RegistrationStatus.Error("Error del servidor: ${e.message}")
+                _registrationStatus.value = RegistrationStatus.Error("Error del servidor: ${e.code()}")
             }
         }
     }
@@ -137,45 +165,35 @@ class MainViewModel : ViewModel() {
         _registrationStatus.value = RegistrationStatus.Idle
     }
 
-    // --- LÓGICA DE NAVEGACIÓN ---
+    // --- LÓGICA DE NAVEGACIÓN (Tus funciones existentes) ---
+    // ... (Navigation Events Code)
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
     val navigationEvents: SharedFlow<NavigationEvent> = _navigationEvents.asSharedFlow()
 
     private val _uiEvents = MutableSharedFlow<String>()
     val uiEvents = _uiEvents.asSharedFlow()
 
-    fun navigateTo(screen: Screen,
-                   popUpRoute: Screen? = null,
-                   inclusive: Boolean = false,
-                   singleTop: Boolean = false){
+    fun navigateTo(screen: Screen, popUpRoute: Screen? = null, inclusive: Boolean = false, singleTop: Boolean = false){
         viewModelScope.launch {
-            _navigationEvents.emit(NavigationEvent.NavigateTo(route = screen,
-                popUpRoute = popUpRoute,
-                inclusive = inclusive,
-                singleTop = singleTop))
+            _navigationEvents.emit(NavigationEvent.NavigateTo(route = screen, popUpRoute = popUpRoute, inclusive = inclusive, singleTop = singleTop))
         }
     }
 
     fun navigateBack() {
-        viewModelScope.launch {
-            _navigationEvents.emit(NavigationEvent.PopBackStack)
-        }
+        viewModelScope.launch { _navigationEvents.emit(NavigationEvent.PopBackStack) }
     }
 
     fun navigateUp(){
-        viewModelScope.launch {
-            _navigationEvents.emit(NavigationEvent.NavigateUp)
-        }
+        viewModelScope.launch { _navigationEvents.emit(NavigationEvent.NavigateUp) }
     }
+    // --------------------------------------------------------
 
-    // --- LÓGICA DEL CARRITO ---
+    // --- LÓGICA DEL CARRITO (Tus funciones existentes) ---
     private val _carrito = MutableStateFlow<List<CartItem>>(emptyList())
     val carrito: StateFlow<List<CartItem>> = _carrito.asStateFlow()
 
     fun agregarAlCarrito(producto: Producto){
-        // ... (lógica del carrito, no modificada)
         _carrito.update { currentItems ->
-            // ... (código)
             val itemExistente = currentItems.find { it.producto.id == producto.id }
             if (itemExistente != null){
                 currentItems.map { item ->
@@ -187,7 +205,6 @@ class MainViewModel : ViewModel() {
     }
 
     fun removerDelCarrito(producto: Producto){
-        // ... (lógica del carrito, no modificada)
         _carrito.update { currentItems ->
             val itemExistente = currentItems.find { it.producto.id == producto.id }
             if (itemExistente != null) {
@@ -202,8 +219,20 @@ class MainViewModel : ViewModel() {
     }
 
     fun eliminarProductoDelCarrito(producto: Producto){
-        // ... (lógica del carrito, no modificada)
         _carrito.update { currentItems -> currentItems.filter { it.producto.id != producto.id } }
         viewModelScope.launch { _uiEvents.emit("✅ Se ha eliminado ${producto.nombre} del carro.") }
+    }
+
+    // --- LÓGICA DE FORMATO ---
+    fun formatPrice(price: Number?): String {
+        if (price == null) return "Precio no disponible"
+
+        // Usamos es-CL para el formato chileno (punto como separador de miles)
+        val formatter = NumberFormat.getNumberInstance(Locale("es", "CL"))
+
+        formatter.maximumFractionDigits = 0
+        formatter.minimumFractionDigits = 0
+
+        return formatter.format(price)
     }
 }

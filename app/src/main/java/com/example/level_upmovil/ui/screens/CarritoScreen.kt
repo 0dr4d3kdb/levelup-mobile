@@ -138,13 +138,14 @@ fun CarritoItems(
                 Text(text = cartItem.producto.nombre)
 
                 // 💥 Mostrar el precio total por item (opcional, pero buena práctica)
-                val itemTotalPrice = cartItem.producto.precio.toFloatOrNull()?.times(cartItem.cantidad) ?: "Error"
+                val precioUnitario = cartItem.producto.precio // Esto ya es un Int
+                val itemTotalPrice = precioUnitario * cartItem.cantidad
 
                 Text(
-                    text = "Precio/u: ${cartItem.producto.precio}"
+                    text = "Precio/u: $${viewModel.formatPrice(precioUnitario)}"
                 )
                 Text(
-                    text = "Total: $${String.format("%.2f", itemTotalPrice)}"
+                    text = "Total: $${viewModel.formatPrice(itemTotalPrice)}"
                 )
 
                 Text(

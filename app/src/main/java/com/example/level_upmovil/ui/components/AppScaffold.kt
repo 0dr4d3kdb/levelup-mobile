@@ -37,7 +37,9 @@ fun AppScaffold(
     navController: NavController,
     viewModel: MainViewModel,
     title: String,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     content: @Composable (PaddingValues) -> Unit
+
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
