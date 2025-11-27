@@ -14,6 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.level_upmovil.ui.screens.HomeScreen
+<<<<<<< Updated upstream
+=======
+import com.example.level_upmovil.ui.screens.LoginScreen
+import com.example.level_upmovil.ui.screens.NosotrosScreen
+import com.example.level_upmovil.ui.screens.RegistroScreen
+import com.example.level_upmovil.ui.screens.ProfileScreen
+>>>>>>> Stashed changes
 import com.example.level_upmovil.ui.theme.LevelupMovilTheme
 
 class MainActivity : ComponentActivity() {
@@ -25,7 +32,54 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     color = MaterialTheme.colorScheme.surface
                 ) {
+<<<<<<< Updated upstream
                     HomeScreen()
+=======
+                    composable(route = Screen.Home.route) {
+                        HomeScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable (route = Screen.Login.route){
+                        LoginScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable (route = Screen.Registro.route){
+                        RegistroScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable(route = Screen.Profile.route) {
+                        ProfileScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable (route = Screen.Catalogo.route){
+                        CatalogoScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable (route = Screen.DetalleProducto.route,
+                        arguments = listOf(
+                            navArgument("productoId"){
+                                type = NavType.IntType
+                                defaultValue = -1
+                            }
+                        )
+                    ){backStackEntry ->
+                        val productoId = backStackEntry.arguments?.getInt("productoId") ?: -1
+
+                        val onAddAction: (Producto) -> Unit = {producto ->
+                            println("Acción de agregar al carro pendiente")
+                        }
+
+                        DetalleProductoScreen(
+                            productoId = productoId,
+                            navController = navController,
+                            viewModel = viewModel
+                            //onAddToCartClick =onAddAction
+                        )
+                    }
+
+                    composable(route = Screen.Carrito.route) {
+                        CarritoScreen(navController = navController, viewModel = viewModel)
+                    }
+
+                    composable(route = Screen.Nosotros.route) {
+                        NosotrosScreen(navController = navController, viewModel = viewModel)
+                    }
+>>>>>>> Stashed changes
                 }
             }
         }
