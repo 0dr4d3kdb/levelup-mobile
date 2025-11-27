@@ -33,6 +33,7 @@ import com.example.level_upmovil.ui.screens.CatalogoScreen
 import com.example.level_upmovil.ui.screens.DetalleProductoScreen
 import com.example.level_upmovil.ui.screens.HomeScreen
 import com.example.level_upmovil.ui.screens.LoginScreen
+import com.example.level_upmovil.ui.screens.NosotrosScreen
 import com.example.level_upmovil.ui.screens.RegistroScreen
 import com.example.level_upmovil.ui.screens.ProfileScreen
 import com.example.level_upmovil.ui.theme.LevelupMovilTheme
@@ -122,6 +123,10 @@ class MainActivity : ComponentActivity() {
 
                     composable(route = Screen.Carrito.route) {
                         CarritoScreen(navController = navController, viewModel = viewModel)
+                    }
+
+                    composable(route = Screen.Nosotros.route) {
+                        NosotrosScreen(navController = navController, viewModel = viewModel)
                     }
                 }
             }
