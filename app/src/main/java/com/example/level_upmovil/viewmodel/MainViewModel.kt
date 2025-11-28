@@ -30,6 +30,12 @@ sealed class ProductListStatus {
     data class Success(val products: List<Producto>) : ProductListStatus()
     data class Error(val message: String) : ProductListStatus()
 }
+sealed class LoginStatus {
+    data object Idle : LoginStatus() // Estado inicial / listo para intentar
+    data object Loading : LoginStatus() // Login en progreso
+    data object Success : LoginStatus() // Login exitoso (token recibido)
+    data class Error(val message: String) : LoginStatus() // Fallo en la API o credenciales incorrectas
+}
 
 class MainViewModel : ViewModel() {
 
@@ -60,26 +66,20 @@ class MainViewModel : ViewModel() {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
-    // Inicializar la carga de productos al crear el ViewModel
+
     init {
-        // 💥 [CORRECCIÓN 3]: Llamar a la función específica del Catálogo o Home.
-        // Es mejor dejar esto en la pantalla o hacer una carga inicial mínima.
-        // Llamaremos al catálogo para que la lista 'productos' no esté vacía.
         fetchCatalogoProductosByIds()
     }
 
-    // 💥 [NUEVA FUNCIÓN]: Carga para el Catálogo (Productos 5 al 10)
+
     fun fetchCatalogoProductosByIds() {
         viewModelScope.launch {
             _productsStatus.value = ProductListStatus.Loading
-
-            // Los IDs que quieres cargar (5, 6, 7, 8, 9, 10)
             val idsToFetch = listOf(5, 6, 7, 8, 9, 10)
             val buffer = mutableListOf<Producto>()
 
             for (id in idsToFetch) {
                 try {
-                    // Llama al endpoint GET /api/productos/{id} para cada ID
                     val producto = apiService.getProductoPorId(id)
                     buffer.add(producto)
                 } catch (e: Exception) {
@@ -103,7 +103,7 @@ class MainViewModel : ViewModel() {
     val homeProductsById: StateFlow<List<Producto>> = _homeProductsById.asStateFlow()
 
 
-    // 2. 💥 Nueva función para cargar los IDs deseados (1, 2, 3, 4)
+
     fun fetchHomeProductsByIds() {
         viewModelScope.launch {
             // Los IDs que quieres cargar (1 al 4)
@@ -133,6 +133,58 @@ class MainViewModel : ViewModel() {
     fun getProductoById(id: Int): Producto? {
         return productos.value.find { it.id == id }
     }
+//logica de login
+var authToken: String? = null
+    private set
+    private val _loginStatus = MutableStateFlow<LoginStatus>(LoginStatus.Idle)
+    val loginStatus: StateFlow<LoginStatus> = _loginStatus.asStateFlow()
+
+    fun loginUser(correo: String, password: String) {
+        viewModelScope.launch {
+            // 1. Iniciar estado de carga
+            _loginStatus.value = LoginStatus.Loading
+
+            // Asumo que el modelo Usuario se usa para enviar las credenciales
+            val loginUser = Usuario(nombre = "", correo = correo, password = password)
+
+            try {
+                // 2. Llamada a la API (Retrofit)
+                val response = RetrofitClient.apiServiceUsuario.loginUsuario(loginUser)
+
+                if (response.isSuccessful) {
+                    val loginResponse = response.body()
+                    if (loginResponse != null) {
+                        // 3. Éxito: Guardar el token
+                        authToken = loginResponse.token
+                        Log.i("LOGIN_SUCCESS", "Token JWT recibido y guardado: $authToken")
+
+                        // 4. Emitir éxito y navegar
+                        _loginStatus.value = LoginStatus.Success
+                        // Nota: Aquí se asume que tienes la función navigateTo disponible
+                         navigateTo(Screen.Home, popUpRoute = Screen.Login, inclusive = true)
+                    } else {
+                        _loginStatus.value = LoginStatus.Error("Respuesta vacía del servidor al iniciar sesión.")
+                    }
+                } else {
+                    // Fallo: error de credenciales (ej: HTTP 401 Unauthorized)
+                    val errorBody = response.errorBody()?.string() ?: "Error de credenciales."
+                    _loginStatus.value = LoginStatus.Error("Fallo en el login. Verifica tus credenciales.")
+                    Log.e("LOGIN_API", "Fallo: ${response.code()} - $errorBody")
+                }
+            } catch (e: IOException) {
+                // 5. Error de red
+                _loginStatus.value = LoginStatus.Error("Error de conexión. No se pudo conectar al servidor.")
+            } catch (e: HttpException) {
+                // 6. Otro error HTTP del servidor
+                _loginStatus.value = LoginStatus.Error("Error del servidor HTTP: ${e.code()}. Intenta más tarde.")
+            }
+        }
+    }
+
+    fun resetLoginStatus() {
+        _loginStatus.value = LoginStatus.Idle
+    }
+
 
     // --- LÓGICA DE REGISTRO ---
     private val _registrationStatus = MutableStateFlow<RegistrationStatus>(RegistrationStatus.Idle)
@@ -148,7 +200,7 @@ class MainViewModel : ViewModel() {
 
                 if (response.isSuccessful) {
                     _registrationStatus.value = RegistrationStatus.Success
-                  //  navigateTo(Screen.Login, popUpRoute = Screen.Registro, inclusive = true)
+                   navigateTo(Screen.Login, popUpRoute = Screen.Registro, inclusive = true)
                 } else {
                     val errorDetail = response.errorBody()?.string() ?: "Error desconocido en el servidor."
                     _registrationStatus.value = RegistrationStatus.Error("Fallo en el registro: $errorDetail")

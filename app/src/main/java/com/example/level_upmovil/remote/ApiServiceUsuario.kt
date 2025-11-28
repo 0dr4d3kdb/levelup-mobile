@@ -1,4 +1,5 @@
 package com.example.level_upmovil.remote
+ import com.example.level_upmovil.model.LoginResponse
  import com.example.level_upmovil.model.Producto
  import com.example.level_upmovil.model.RegistroResponse
  import com.example.level_upmovil.model.Usuario
@@ -9,10 +10,10 @@ package com.example.level_upmovil.remote
  import retrofit2.http.Body
  import retrofit2.http.Query
 interface ApiServiceUsuario {
- @POST("/api/auth/registro") // 🛑 Usa la ruta del AuthController
+ @POST("/api/auth/registro")
  suspend fun registerUsuario(@Body usuario: Usuario): Response<RegistroResponse>
  @POST("api/auth/login")
- suspend fun loginUsuario(@Body usuario: Usuario): Response<String>
+ suspend fun loginUsuario(@Body usuario: Usuario): Response<LoginResponse>
  //@GET("api/usuarios/{id}")
  //suspend fun getProductoPorId(@Path("id") productoId: Int): Producto
  @GET("/api/productos")
