@@ -37,7 +37,9 @@ fun AppScaffold(
     navController: NavController,
     viewModel: MainViewModel,
     title: String,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     content: @Composable (PaddingValues) -> Unit
+
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -88,11 +90,6 @@ fun AppScaffold(
                     label = {Text("Registro")},
                     selected = title == "Registro",
                     onClick = {navigateAndClose(Screen.Registro)}
-                )
-                NavigationDrawerItem(
-                    label = {Text("Nosotros")},
-                    selected = title == "Nosotros",
-                    onClick = {navigateAndClose(Screen.Nosotros)}
                 )
             }
         }

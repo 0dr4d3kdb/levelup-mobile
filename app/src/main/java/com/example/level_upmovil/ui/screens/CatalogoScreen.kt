@@ -136,7 +136,7 @@ fun CatalogoScreen(
                     ) {
                         Text(text = "❌ Error al cargar productos: $errorMessage", textAlign = TextAlign.Center, modifier = Modifier.padding(24.dp))
                         Spacer(Modifier.height(16.dp))
-                        Button(onClick = { viewModel.fetchProductos() }) {
+                        Button(onClick = { viewModel.fetchHomeProductsByIds() }) {
                             Text("Reintentar Carga")
                         }
                     }
@@ -156,6 +156,7 @@ fun CatalogoScreen(
                                 producto = producto,
                                 onReviewClick = onReviewAction,
                                 onAddToCartClick = onAddAction,
+                                viewModel = viewModel,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -172,6 +173,7 @@ fun ProductoCard(
     producto: Producto,
     onReviewClick: (Producto) -> Unit,
     onAddToCartClick: (Producto) -> Unit,
+    viewModel: MainViewModel,
     modifier: Modifier = Modifier
 ){
     Card(
@@ -201,7 +203,7 @@ fun ProductoCard(
 
                 // Añade el escalado si lo necesitas:
                 contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                
+
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
@@ -215,7 +217,7 @@ fun ProductoCard(
 
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = producto.precio, // Asumiendo que 'producto.precio' es String o tiene formato adecuado
+                text = "$${viewModel.formatPrice(producto.precio)}", // Asumiendo que 'producto.precio' es String o tiene formato adecuado
                 fontWeight = FontWeight.SemiBold,
             )
 

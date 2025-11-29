@@ -41,7 +41,7 @@ fun DetalleProductoScreen(
 
     // 💥 2. Iniciar la carga del producto al entrar a la pantalla (Fetching Directo)
     LaunchedEffect(productoId) {
-        viewModel.fetchProductoDetalle(productoId)
+        viewModel.fetchCatalogoProductosByIds()
     }
 
     val scrollState = rememberScrollState()
@@ -104,7 +104,7 @@ fun DetalleProductoScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = currentProducto.precio
+                text = "$${viewModel.formatPrice(currentProducto.precio)}"
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(

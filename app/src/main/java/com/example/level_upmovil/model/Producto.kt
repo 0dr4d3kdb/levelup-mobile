@@ -6,13 +6,12 @@ import com.google.gson.annotations.SerializedName
 data class Producto(
     val id: Int,
     val nombre: String,
-    val precio: String,
+    val precio: Int,
     @SerializedName("imagenUrl")
     val imageResId: String,
     @SerializedName("descripcion")
     val descripcion: String?= "Sin descripcion disponible",
     val categoria: String? = null, // Si el API no la manda, no falla
-    val precioInt: Int? = null
 )
 
 //val listaProductos = listOf(
