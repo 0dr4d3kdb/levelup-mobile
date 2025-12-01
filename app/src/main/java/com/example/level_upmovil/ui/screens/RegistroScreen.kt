@@ -25,6 +25,8 @@ import com.example.level_upmovil.viewmodel.MainViewModel
 import com.example.level_upmovil.viewmodel.RegistrationStatus
 import androidx.compose.foundation.clickable
 import android.util.Log // 💥 Necesario para el Log temporal
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 private val emailRegex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}".toRegex()
 
@@ -51,7 +53,10 @@ fun RegistroScreen(
     // Snackbar para mostrar mensajes de error/éxito
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // 💥 Manejo de la navegación y errores de la API
+    // Manejo de la navegación y errores de la API
+
+    val scrollState = rememberScrollState()
+
     LaunchedEffect(registrationStatus) {
         when (registrationStatus) {
             is RegistrationStatus.Success -> {
@@ -101,7 +106,8 @@ fun RegistroScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(32.dp)
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {

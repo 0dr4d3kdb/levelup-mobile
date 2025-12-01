@@ -91,6 +91,11 @@ fun AppScaffold(
                     selected = title == "Registro",
                     onClick = {navigateAndClose(Screen.Registro)}
                 )
+                NavigationDrawerItem(
+                    label = {Text("Nosotros")},
+                    selected = title == "Sobre nosotros",
+                    onClick = {navigateAndClose(Screen.Nosotros)}
+                )
             }
         }
     ) {

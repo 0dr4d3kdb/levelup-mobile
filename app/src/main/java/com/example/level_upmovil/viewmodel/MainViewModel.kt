@@ -12,6 +12,7 @@ import com.example.level_upmovil.navigation.Screen
 import com.example.level_upmovil.remote.ApiServiceUsuario
 import com.example.level_upmovil.remote.RetrofitClient
 import com.example.level_upmovil.repository.ProductoRepository
+import com.example.level_upmovil.repository.UsuarioRepository // Importación necesaria
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -33,43 +34,39 @@ sealed class ProductListStatus {
     data class Error(val message: String) : ProductListStatus()
 }
 sealed class LoginStatus {
-    data object Idle : LoginStatus() // Estado inicial / listo para intentar
-    data object Loading : LoginStatus() // Login en progreso
-    data object Success : LoginStatus() // Login exitoso (token recibido)
-    data class Error(val message: String) : LoginStatus() // Fallo en la API o credenciales incorrectas
+    data object Idle : LoginStatus()
+    data object Loading : LoginStatus()
+    data object Success : LoginStatus() // Login exitoso
+    data class Error(val message: String) : LoginStatus()
 }
 
 class MainViewModel : ViewModel() {
 
-
-    // 1. INSTANCIA DEL SERVICIO
+    // 1. INSTANCIA DEL SERVICIO (Necesaria para inyectar en Repositorios)
     private val apiService = RetrofitClient.apiServiceUsuario
 
     private val productoRepository = ProductoRepository(apiService)
 
+    private val usuarioRepository = UsuarioRepository(apiService)
+
     // --- LÓGICA DE PRODUCTOS ---
 
-    // Estado del Catálogo (usando ProductListStatus para errores y carga)
     private val _productsStatus = MutableStateFlow<ProductListStatus>(ProductListStatus.Idle)
     val productsStatus: StateFlow<ProductListStatus> = _productsStatus.asStateFlow()
 
-    // 💥 [CORRECCIÓN 1]: Estado para el detalle de un producto
     private val _productoDetalle = MutableStateFlow<Producto?>(null)
     val productoDetalle: StateFlow<Producto?> = _productoDetalle.asStateFlow()
 
-    // 💥 [CORRECCIÓN 2]: Estado para los productos de la Home Screen
     private val _homeProducts = MutableStateFlow<List<Producto>>(emptyList())
     val homeProducts: StateFlow<List<Producto>> = _homeProducts.asStateFlow()
 
 
-    // Flujo simplificado que extrae la lista de productos del estado ProductListStatus (para búsqueda, etc.)
     val productos: StateFlow<List<Producto>> = _productsStatus.map { status ->
         when (status) {
             is ProductListStatus.Success -> status.products
             else -> emptyList()
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
 
 
     init {
@@ -90,17 +87,13 @@ class MainViewModel : ViewModel() {
                         buffer.add(producto)
                     }
                 } catch (e: Exception) {
-                    // Si falla un ID, registra el error y actualiza el estado si es necesario
                     Log.e("CatalogoAPI", "Fallo al cargar producto ID $id: ${e.message}")
-                    // Si falla, podrías decidir cambiar el estado a Error, pero lo mantendremos en buffer.
                 }
             }
 
-            // 3. Actualizamos el StateFlow de Catálogo
             if (buffer.isNotEmpty()) {
                 _productsStatus.value = ProductListStatus.Success(buffer)
             } else {
-                // Si el buffer está vacío después de las llamadas (ej: todos los IDs fallaron)
                 _productsStatus.value = ProductListStatus.Error("No se pudieron cargar los productos del catálogo (IDs 5-10).")
             }
         }
@@ -110,82 +103,58 @@ class MainViewModel : ViewModel() {
     val homeProductsById: StateFlow<List<Producto>> = _homeProductsById.asStateFlow()
 
 
-
     fun fetchHomeProductsByIds() {
         viewModelScope.launch {
-            // Los IDs que quieres cargar (1 al 4)
             val idsToFetch = listOf(1, 2, 3, 4)
             val buffer = mutableListOf<Producto>()
-
-            // Limpiamos la lista al empezar
             _homeProductsById.value = emptyList()
 
             for (id in idsToFetch) {
                 try {
-                    // Llama al endpoint GET /api/productos/{id} para cada ID
                     val producto = productoRepository.getProductoPorId(id)
                     if (producto != null) {
                         buffer.add(producto)
                     }
                 } catch (e: Exception) {
-                    // Si falla un ID, registra el error y continúa con el siguiente
                     Log.e("HomeAPI", "Fallo al cargar producto ID $id: ${e.message}")
                 }
             }
-
-            // Actualizamos el StateFlow solo una vez con los resultados
             _homeProductsById.value = buffer
         }
     }
 
-    // Función de búsqueda local (usa la lista del Catálogo)
     fun getProductoById(id: Int): Producto? {
         return productos.value.find { it.id == id }
     }
-    //logica de login
+
+    // --- LÓGICA DE LOGIN ---
+
     var authToken: String? = null
         private set
+
     private val _loginStatus = MutableStateFlow<LoginStatus>(LoginStatus.Idle)
     val loginStatus: StateFlow<LoginStatus> = _loginStatus.asStateFlow()
 
     fun loginUser(correo: String, password: String) {
         viewModelScope.launch {
-            // 1. Iniciar estado de carga
             _loginStatus.value = LoginStatus.Loading
-
-            // Asumo que el modelo Usuario se usa para enviar las credenciales
             val loginUser = Usuario(nombre = "", correo = correo, password = password)
 
             try {
-                // 2. Llamada a la API (Retrofit)
-                val response = RetrofitClient.apiServiceUsuario.loginUsuario(loginUser)
 
-                if (response.isSuccessful) {
-                    val loginResponse = response.body()
-                    if (loginResponse != null) {
-                        // 3. Éxito: Guardar el token
-                        authToken = loginResponse.token
-                        Log.i("LOGIN_SUCCESS", "Token JWT recibido y guardado: $authToken")
+                val success = usuarioRepository.loginUsuarios(loginUser)
 
-                        // 4. Emitir éxito y navegar
-                        _loginStatus.value = LoginStatus.Success
-                        // Nota: Aquí se asume que tienes la función navigateTo disponible
-                        navigateTo(Screen.Home, popUpRoute = Screen.Login, inclusive = true)
-                    } else {
-                        _loginStatus.value = LoginStatus.Error("Respuesta vacía del servidor al iniciar sesión.")
-                    }
-                } else {
-                    // Fallo: error de credenciales (ej: HTTP 401 Unauthorized)
-                    val errorBody = response.errorBody()?.string() ?: "Error de credenciales."
-                    _loginStatus.value = LoginStatus.Error("Fallo en el login. Verifica tus credenciales.")
-                    Log.e("LOGIN_API", "Fallo: ${response.code()} - $errorBody")
+                if (success) {
+
+                    _loginStatus.value = LoginStatus.Success
+                    navigateTo(Screen.Home, popUpRoute = Screen.Login, inclusive = true)
                 }
-            } catch (e: IOException) {
-                // 5. Error de red
-                _loginStatus.value = LoginStatus.Error("Error de conexión. No se pudo conectar al servidor.")
-            } catch (e: HttpException) {
-                // 6. Otro error HTTP del servidor
-                _loginStatus.value = LoginStatus.Error("Error del servidor HTTP: ${e.code()}. Intenta más tarde.")
+
+            } catch (e: Exception) {
+
+                Log.e("LOGIN_ERROR", "Login failed: ${e.message}")
+                val errorMessage = e.message ?: "Error desconocido al iniciar sesión."
+                _loginStatus.value = LoginStatus.Error(errorMessage)
             }
         }
     }
@@ -205,19 +174,17 @@ class MainViewModel : ViewModel() {
             val newUser = Usuario(nombre = nombre, correo = correo, password = password)
 
             try {
-                val response = RetrofitClient.apiServiceUsuario.registerUsuario(newUser)
 
-                if (response.isSuccessful) {
-                    _registrationStatus.value = RegistrationStatus.Success
-                    navigateTo(Screen.Login, popUpRoute = Screen.Registro, inclusive = true)
-                } else {
-                    val errorDetail = response.errorBody()?.string() ?: "Error desconocido en el servidor."
-                    _registrationStatus.value = RegistrationStatus.Error("Fallo en el registro: $errorDetail")
-                }
-            } catch (e: IOException) {
-                _registrationStatus.value = RegistrationStatus.Error("Error de conexión. Revisa tu internet.")
-            } catch (e: HttpException) {
-                _registrationStatus.value = RegistrationStatus.Error("Error del servidor: ${e.code()}")
+                usuarioRepository.registerUsuario(newUser)
+
+
+                _registrationStatus.value = RegistrationStatus.Success
+                navigateTo(Screen.Login, popUpRoute = Screen.Registro, inclusive = true)
+
+            } catch (e: Exception) {
+
+                val errorMessage = e.message ?: "Fallo desconocido en el registro."
+                _registrationStatus.value = RegistrationStatus.Error(errorMessage)
             }
         }
     }
@@ -226,8 +193,7 @@ class MainViewModel : ViewModel() {
         _registrationStatus.value = RegistrationStatus.Idle
     }
 
-    // --- LÓGICA DE NAVEGACIÓN (Tus funciones existentes) ---
-    // ... (Navigation Events Code)
+    // --- LÓGICA DE NAVEGACIÓN ---
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
     val navigationEvents: SharedFlow<NavigationEvent> = _navigationEvents.asSharedFlow()
 
@@ -249,7 +215,7 @@ class MainViewModel : ViewModel() {
     }
     // --------------------------------------------------------
 
-    // --- LÓGICA DEL CARRITO (Tus funciones existentes) ---
+    // --- LÓGICA DEL CARRITO ---
     private val _carrito = MutableStateFlow<List<CartItem>>(emptyList())
     val carrito: StateFlow<List<CartItem>> = _carrito.asStateFlow()
 
@@ -288,9 +254,7 @@ class MainViewModel : ViewModel() {
     fun formatPrice(price: Number?): String {
         if (price == null) return "Precio no disponible"
 
-        // Usamos es-CL para el formato chileno (punto como separador de miles)
         val formatter = NumberFormat.getNumberInstance(Locale("es", "CL"))
-
         formatter.maximumFractionDigits = 0
         formatter.minimumFractionDigits = 0
 
