@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-
 }
 
 android {
@@ -28,39 +27,50 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
-    //Kotest
+
+    // --------------------------------------------------
+    // KOTEST + JUnit5
+    // --------------------------------------------------
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest:kotest-assertions-core:5.8.0")
-
-    //Junit5
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 
-    //MockK
+    // --------------------------------------------------
+    // MockK
+    // --------------------------------------------------
     testImplementation("io.mockk:mockk:1.13.10")
 
-    //Compose UI Test
+    // --------------------------------------------------
+    // Compose UI Tests
+    // --------------------------------------------------
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.9.5")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.2")
 
+    // --------------------------------------------------
+    // Dependencias de tu app
+    // --------------------------------------------------
     implementation("com.google.android.gms:play-services-maps:18.2.0")
-// 2. Librería específica de Compose para el mapa
     implementation("com.google.maps.android:maps-compose:3.0.0")
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
     implementation(platform("androidx.compose:compose-bom:2024.09.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
@@ -68,10 +78,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.compose.material3:material3:1.4.0")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("io.coil-kt:coil-compose:2.5.0")
-    implementation("androidx.compose.material:material-icons-extended")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -87,8 +95,19 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
 
-    tasks.withType<Test>().configureEach {
-        useJUnitPlatform()
-    }
+// --------------------------------------------------
+// OBLIGATORIO PARA JUNIT5 + KOTEST
+// --------------------------------------------------
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
+// (Opcional pero arregla problemas en algunos entornos)
+configurations.all {
+    attributes.attribute(
+        Attribute.of("test-framework", String::class.java),
+        "junit-platform"
+    )
 }
