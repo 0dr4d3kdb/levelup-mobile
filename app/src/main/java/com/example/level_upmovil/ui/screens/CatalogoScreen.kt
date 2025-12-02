@@ -69,8 +69,8 @@ fun CatalogoScreen(
     }
 
     // 6. Asegurar que el filtro se aplique al cargar datos
-    LaunchedEffect(currentProducts) {
-        performSearch()
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllProductos()
     }
 
 

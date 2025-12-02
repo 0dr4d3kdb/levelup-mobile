@@ -73,6 +73,18 @@ class MainViewModel : ViewModel() {
         fetchCatalogoProductosByIds()
     }
 
+    fun fetchAllProductos() {
+        viewModelScope.launch {
+            _productsStatus.value = ProductListStatus.Loading
+
+            try {
+                val productos = productoRepository.getProductos()  // 💥 Obtener TODOS desde la API/BD
+                _productsStatus.value = ProductListStatus.Success(productos)
+            } catch (e: Exception) {
+                _productsStatus.value = ProductListStatus.Error("Error: ${e.message}")
+            }
+        }
+    }
 
     fun fetchCatalogoProductosByIds() {
         viewModelScope.launch {

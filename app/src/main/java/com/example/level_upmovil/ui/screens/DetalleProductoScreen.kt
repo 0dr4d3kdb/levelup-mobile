@@ -36,17 +36,17 @@ fun DetalleProductoScreen(
     viewModel: MainViewModel
 ){
 
-    // 💥 1. Observar el StateFlow de Producto individual
+
     val producto by viewModel.productoDetalle.collectAsState()
 
-    // 💥 2. Iniciar la carga del producto al entrar a la pantalla (Fetching Directo)
+
     LaunchedEffect(productoId) {
         viewModel.fetchProductoDetalle(productoId)
     }
 
     val scrollState = rememberScrollState()
 
-    // 💥 3. Manejo de Carga/Error
+
     if (producto == null){
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -61,10 +61,10 @@ fun DetalleProductoScreen(
                 )
             }
         }
-        return // 🛑 Retornar para evitar que el resto del código Composable se ejecute
+        return
     }
 
-    // 💥 Si llegamos aquí, 'producto' ya no es null. Usamos el operador '!!' de forma segura.
+
     val currentProducto = producto!!
 
     val onAddToCartClick: (Producto) -> Unit = { p ->
