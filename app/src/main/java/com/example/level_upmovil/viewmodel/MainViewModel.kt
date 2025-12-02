@@ -123,6 +123,18 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun fetchProductoDetalle(id: Int) {
+        viewModelScope.launch {
+            try {
+                _productoDetalle.value = productoRepository.getProductoPorId(id)
+            } catch (e: Exception) {
+                Log.e("DetalleProducto", "Error cargando producto $id: ${e.message}")
+                _productoDetalle.value = null
+            }
+        }
+    }
+
+
     fun getProductoById(id: Int): Producto? {
         return productos.value.find { it.id == id }
     }
